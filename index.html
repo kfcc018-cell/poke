@@ -284,7 +284,7 @@
             if (isGhostPhase || isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
-            const speed = isPhase2 ? BASE_SLOWPOKE_SPEED * 1.2 : BASE_SLOWPOKE_SPEED;
+            const speed = isPhase2 ? BASE_SLOWPOKE_SPEED * 1.05 : BASE_SLOWPOKE_SPEED;
             
             const isMidPhase = isBlastoiseEventFinished && !isGhostPhase;
             let type = 'slowpoke';
