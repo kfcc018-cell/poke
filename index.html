@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>피카츄 장애물 피하기 - 페이즈 2 업데이트</title>
+    <title>피카츄 장애물 피하기 - 페이즈 2 개편</title>
     <style>
         body {
             background-color: #111;
@@ -52,9 +52,9 @@
 
         // 이미지 로딩 관리
         let pikachuLoaded = false, raichuLoaded = false, charizardLoaded = false;
-        let slowpokeLoaded = false, starmieLoaded = false;
-        let magikarpLoaded = false, gyaradosLoaded = false;
-        let pidgeotLoaded = false, spearowLoaded = false;
+        let slowpokeLoaded = false, slowkingLoaded = false;
+        let magikarpLoaded = false, mewLoaded = false;
+        let pidgeotLoaded = false, gyaradosLoaded = false;
         let zapdosLoaded = false, hoohLoaded = false;
         let thunderStoneLoaded = false;
 
@@ -73,13 +73,13 @@
         const charizardImg = loadImage(`${BASE_CDN}6.png`, () => charizardLoaded = true);
 
         const slowpokeImg = loadImage(`${BASE_CDN}79.png`, () => slowpokeLoaded = true);
-        const starmieImg = loadImage(`${BASE_CDN}121.png`, () => starmieLoaded = true);
+        const slowkingImg = loadImage(`${BASE_CDN}199.png`, () => slowkingLoaded = true);
 
         const magikarpImg = loadImage(`${BASE_CDN}129.png`, () => magikarpLoaded = true);
-        const gyaradosImg = loadImage(`${BASE_CDN}130.png`, () => gyaradosLoaded = true);
+        const mewImg = loadImage(`${BASE_CDN}151.png`, () => mewLoaded = true);
 
         const pidgeotImg = loadImage(`${BASE_CDN}18.png`, () => pidgeotLoaded = true);
-        const spearowImg = loadImage(`${BASE_CDN}21.png`, () => spearowLoaded = true);
+        const gyaradosImg = loadImage(`${BASE_CDN}130.png`, () => gyaradosLoaded = true);
 
         const zapdosImg = loadImage(`${BASE_CDN}145.png`, () => zapdosLoaded = true);
         const hoohImg = loadImage(`${BASE_CDN}250.png`, () => hoohLoaded = true);
@@ -174,7 +174,7 @@
                 size: 15,
                 drawWidth: 40,
                 drawHeight: 40,
-                type: isPhase2 ? 'starmie' : 'slowpoke'
+                type: isPhase2 ? 'slowking' : 'slowpoke'
             });
         }
 
@@ -191,7 +191,7 @@
                 size: 16,
                 drawWidth: 42,
                 drawHeight: 42,
-                type: isPhase2 ? 'gyarados' : 'magikarp'
+                type: isPhase2 ? 'mew' : 'magikarp'
             });
         }
 
@@ -220,10 +220,10 @@
                 y: spawnY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 18,
-                drawWidth: 55,
-                drawHeight: 55,
-                type: isPhase2 ? 'spearow' : 'pidgeot'
+                size: isPhase2 ? 22 : 18,
+                drawWidth: isPhase2 ? 66 : 55, // 크기 1.2배 증가
+                drawHeight: isPhase2 ? 66 : 55,
+                type: isPhase2 ? 'gyarados' : 'pidgeot'
             });
         }
 
@@ -295,8 +295,8 @@
             survivalTime = Math.floor((Date.now() - startTime) / 1000);
             scoreElement.textContent = survivalTime;
 
-            // 40초 거대 리자몽 스와이핑 이벤트
-            if (survivalTime >= 20 && !charizardTriggered) {
+            // 30초 거대 리자몽 스와이핑 이벤트
+            if (survivalTime >= 30 && !charizardTriggered) {
                 charizardTriggered = true;
                 isPhase2 = true;
                 charizard = {
@@ -309,11 +309,10 @@
                 };
             }
 
-            // 리자몽 이동 및 적 소멸 스와이핑 처리
+            // 리자몽 이동 및 적 스와이핑 제거
             if (charizard) {
                 charizard.x += charizard.vx * dt;
 
-                // 화면 상의 모든 장애물 제거
                 const isSwept = (obj) => obj.x > charizard.x - 120;
                 slowpokes = slowpokes.filter(s => !isSwept(s));
                 magikarps = magikarps.filter(m => !isSwept(m));
@@ -325,7 +324,7 @@
                 }
             }
 
-            // 무적 타이머 및 깜빡임
+            // 무적 타이머
             if (pikachu.isInvincible) {
                 pikachu.invincibleTimer -= dt;
 
@@ -349,7 +348,6 @@
                 spawnSlowpoke();
             }
 
-            // 이동
             let dx = 0;
             let dy = 0;
 
@@ -369,7 +367,6 @@
             pikachu.x = Math.max(pikachu.size, Math.min(CANVAS_WIDTH - pikachu.size, pikachu.x));
             pikachu.y = Math.max(pikachu.size, Math.min(CANVAS_HEIGHT - pikachu.size, pikachu.y));
 
-            // 번개의돌 먹기
             for (let i = thunderStones.length - 1; i >= 0; i--) {
                 const ts = thunderStones[i];
                 ts.x += ts.vx * dt;
@@ -502,7 +499,6 @@
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // 무적 오라
             if (pikachu.isInvincible) {
                 const shouldDrawAura = pikachu.invincibleTimer > 1.5 || (Math.floor(pikachu.invincibleTimer * 12) % 2 === 0);
                 if (shouldDrawAura) {
@@ -510,7 +506,6 @@
                 }
             }
 
-            // 플레이어 캐릭터 (무적 시 라이츄, 평소 피카츄)
             const activePlayerImg = pikachu.isInvincible ? (raichuLoaded ? raichuImg : pikachuImg) : (pikachuLoaded ? pikachuImg : null);
             if (activePlayerImg) {
                 const w = pikachu.isInvincible ? 50 : pikachu.drawWidth;
@@ -523,7 +518,6 @@
                 ctx.fillText(pikachu.isInvincible ? "⚡🐭" : "⚡", pikachu.x, pikachu.y);
             }
 
-            // 번개의돌
             thunderStones.forEach(ts => {
                 if (thunderStoneLoaded) {
                     ctx.drawImage(thunderStoneImg, ts.x - ts.drawWidth / 2, ts.y - ts.drawHeight / 2, ts.drawWidth, ts.drawHeight);
@@ -535,42 +529,42 @@
                 }
             });
 
-            // 야돈 / 아쿠스타
+            // 야돈 / 야돈킹
             slowpokes.forEach(s => {
-                const img = s.type === 'starmie' ? (starmieLoaded ? starmieImg : null) : (slowpokeLoaded ? slowpokeImg : null);
+                const img = s.type === 'slowking' ? (slowkingLoaded ? slowkingImg : null) : (slowpokeLoaded ? slowpokeImg : null);
                 if (img) {
                     ctx.drawImage(img, s.x - s.drawWidth / 2, s.y - s.drawHeight / 2, s.drawWidth, s.drawHeight);
                 } else {
                     ctx.font = "22px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(s.type === 'starmie' ? "⭐" : "🦛", s.x, s.y);
+                    ctx.fillText(s.type === 'slowking' ? "👑" : "🦛", s.x, s.y);
                 }
             });
 
-            // 잉어킹 / 갸라도스
+            // 잉어킹 / 뮤
             magikarps.forEach(m => {
-                const img = m.type === 'gyarados' ? (gyaradosLoaded ? gyaradosImg : null) : (magikarpLoaded ? magikarpImg : null);
+                const img = m.type === 'mew' ? (mewLoaded ? mewImg : null) : (magikarpLoaded ? magikarpImg : null);
                 if (img) {
                     ctx.drawImage(img, m.x - m.drawWidth / 2, m.y - m.drawHeight / 2, m.drawWidth, m.drawHeight);
                 } else {
                     ctx.font = "22px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(m.type === 'gyarados' ? "🐉" : "🐟", m.x, m.y);
+                    ctx.fillText(m.type === 'mew' ? "✨" : "🐟", m.x, m.y);
                 }
             });
 
-            // 피존투 / 깨비참
+            // 피존투 / 갸라도스 (크기 1.2배)
             pidgeots.forEach(p => {
-                const img = p.type === 'spearow' ? (spearowLoaded ? spearowImg : null) : (pidgeotLoaded ? pidgeotImg : null);
+                const img = p.type === 'gyarados' ? (gyaradosLoaded ? gyaradosImg : null) : (pidgeotLoaded ? pidgeotImg : null);
                 if (img) {
                     ctx.drawImage(img, p.x - p.drawWidth / 2, p.y - p.drawHeight / 2, p.drawWidth, p.drawHeight);
                 } else {
                     ctx.font = "28px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(p.type === 'spearow' ? "🐦" : "🦅", p.x, p.y);
+                    ctx.fillText(p.type === 'gyarados' ? "🐉" : "🦅", p.x, p.y);
                 }
             });
 
@@ -587,12 +581,11 @@
                 }
             });
 
-            // 거대 리자몽 연출
+            // 거대 리자몽
             if (charizard && charizardLoaded) {
                 ctx.drawImage(charizardImg, charizard.x - charizard.drawWidth / 2, charizard.y - charizard.drawHeight / 2, charizard.drawWidth, charizard.drawHeight);
             }
 
-            // 게임 오버
             if (isGameOver) {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
