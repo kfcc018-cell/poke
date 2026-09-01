@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>업무 FAQ 검색 도우미</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    mark.highlight {
+      background-color: #fde047;
+      color: #854d0e;
+      padding: 0.1em 0.3em;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen antialiased">
+
+  <div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+    <!-- 1. [제목] 헤더 영역 -->
+    <header class="text-center mb-8">
+      <div class="inline-flex items-center justify-center p-3 bg-blue-100 text-blue-700 rounded-2xl mb-3 shadow-sm">
+        <!-- 책/질문 아이콘 SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">업무 FAQ 검색</h1>
+      <p class="text-sm sm:text-base text-slate-500 mt-2">사내 업무와 관련된 궁금한 사항을 카테고리별로 빠르게 찾아보세요.</p>
+    </header>
+
+    <!-- 메인 컨트롤 카드 (검색창 + 카테고리 + 전체보기) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 mb-6">
+      
+      <!-- 2. [검색창] -->
+      <div class="relative mb-5">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input
+          type="text"
+          id="searchInput"
+          class="w-full pl-11 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-base"
+          placeholder="질문이나 키워드를 입력하세요."
+          autocomplete="off"
+        >
+        <button
+          id="clearSearchBtn"
+          type="button"
+          class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+          title="검색어 지우기"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 3. [분류] & [전체보기] 버튼 영역 -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 border-t border-slate-100">
+        
+        <!-- 카테고리 버튼 그룹 -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="categoryGroup" role="tablist">
+          <!-- 카테고리 버튼들은 JavaScript에서 동적 렌더링되거나 초기 설정됨 -->
+        </div>
+
+        <!-- 전체보기 (필터 초기화) 버튼 -->
+        <div class="flex items-center justify-end">
+          <button
+            id="resetAllBtn"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>전체보기</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 검색 결과 상태 표시줄 (건수) -->
+    <div class="flex items-center justify-between px-2 mb-4 text-sm text-slate-600">
+      <div>
+        총 <span id="resultCount" class="font-bold text-blue-600">0</span>건의 FAQ가 있습니다.
+      </div>
+      <div id="activeFilterBadge" class="hidden text-xs px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">
+        <!-- 활성 필터 표시 -->
+      </div>
+    </div>
+
+    <!-- 4. [검색 결과] 리스트 -->
+    <main id="faqList" class="space-y-4" aria-live="polite">
+      <!-- FAQ 카드 아이템들이 여기에 렌더링됩니다 -->
+    </main>
+
+    <!-- 검색 결과가 없을 때의 화면 -->
+    <div id="noResults" class="hidden bg-white border border-slate-200/80 rounded-2xl p-10 text-center shadow-sm">
+      <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-800 mb-1">검색 결과가 없습니다</h3>
+      <p class="text-sm text-slate-500 mb-4">입력하신 검색어와 일치하는 FAQ 내용이 없습니다.</p>
+      <button
+        id="emptyResetBtn"
+        type="button"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm transition"
+      >
+        전체 FAQ 보기
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. 첨부된 JSON 원본 데이터
+    const faqData = [
+      {
+        category: "교육",
+        question: "교육 신청은 어디에서 하나요?",
+        answer_seed: "교육 포털의 과정 검색 후 신청 메뉴를 사용합니다."
+      },
+      {
+        category: "교육",
+        question: "신청한 교육을 취소하려면 어떻게 하나요?",
+        answer_seed: "신청내역에서 취소 가능 여부를 확인합니다."
+      },
+      {
+        category: "문서",
+        question: "주간 업무보고에는 무엇을 넣어야 하나요?",
+        answer_seed: "주요 실적, 이슈, 다음 주 계획을 중심으로 작성합니다."
+      },
+      {
+        category: "IT",
+        question: "사내 시스템 접속이 되지 않습니다.",
+        answer_seed: "네트워크, 브라우저, 계정 상태를 순서대로 확인합니다."
+      },
+      {
+        category: "보안",
+        question: "ChatGPT에 내부 업무자료를 넣어도 되나요?",
+        answer_seed: "교육에서는 합성자료를 사용하고, 실제 자료는 조직의 보안 및 AI 사용 기준을 먼저 확인합니다."
+      },
+      {
+        category: "식권대장",
+        question: "식권대장 포인트로 주류를 구매해도 되나요?",
+        answer_seed: "식권대장 포인트로는 음식료품만 구매 가능합니다."
+      },
+      {
+        category: "피카츄생존일기",
+        question: "피카츄가 이렇게 고생하는데 지우는 어디있나요?",
+        answer_seed: "조금만 더 버티시면 지우가 리자몽을 소환합니다."
+      },
+      {
+        category: "피카츄생존일기",
+        question: "피카츄를 진화시키려면 어떻게 해야 하나요?",
+        answer_seed: "가끔씩 나오는 번개의돌을 먹으면 일시적으로 진화합니다. 하지만, 피카츄는 진화하기를 싫어하기 때문에 결국 다시 피카츄로 돌아옵니다."
+      }
+    ];
+
+    // 카테고리 목록 정의
+    const categories = ["전체", "교육", "문서", "IT", "보안", "식권대장", "피카츄생존일기"];
+
+    // 카테고리별 테마 스타일 매핑
+    const categoryStyles = {
+      "교육": {
+        badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        tag: "text-emerald-700"
+      },
+      "문서": {
+        badge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        tag: "text-indigo-700"
+      },
+      "IT": {
+        badge: "bg-sky-50 text-sky-700 border-sky-200",
+        tag: "text-sky-700"
+      },
+      "보안": {
+        badge: "bg-rose-50 text-rose-700 border-rose-200",
+        tag: "text-rose-700"
+      },
+       "식권대장": {
+        badge: "bg-blue-50 text-blue-700 border-blue-200",
+        tag: "text-blue-700"
+      },
+       "피카츄생존일기": {
+        badge: "bg-yellow-50 text-yellow-700 border-yellow-200",
+        tag: "text-yellow-700"
+      }
+    };
+
+    // 애플리케이션 상태
+    let selectedCategory = "전체";
+    let searchQuery = "";
+
+    // DOM 요소 캐싱
+    const searchInput = document.getElementById("searchInput");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+    const categoryGroup = document.getElementById("categoryGroup");
+    const faqList = document.getElementById("faqList");
+    const resultCount = document.getElementById("resultCount");
+    const noResults = document.getElementById("noResults");
+    const resetAllBtn = document.getElementById("resetAllBtn");
+    const emptyResetBtn = document.getElementById("emptyResetBtn");
+    const activeFilterBadge = document.getElementById("activeFilterBadge");
+
+    // 카테고리 버튼 생성
+    function renderCategoryButtons() {
+      categoryGroup.innerHTML = "";
+      categories.forEach(category => {
+        const isSelected = selectedCategory === category;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.setAttribute("role", "tab");
+        btn.setAttribute("aria-selected", isSelected ? "true" : "false");
+        btn.textContent = category;
+        
+        // Tailwind 스타일 분기
+        btn.className = isSelected
+          ? "px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition whitespace-nowrap"
+          : "px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap";
+
+        btn.addEventListener("click", () => {
+          selectedCategory = category;
+          renderCategoryButtons();
+          renderFAQ();
+        });
+
+        categoryGroup.appendChild(btn);
+      });
+    }
+
+    // HTML 특수문자 이스케이프 함수
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // 검색어 하이라이트 함수 (HTML 안전 처리 포함)
+    function highlightText(text, query) {
+      if (!query.trim()) {
+        return escapeHtml(text);
+      }
+      
+      const escapedText = escapeHtml(text);
+      const escapedQuery = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedQuery})`, 'gi');
+
+      return escapedText.replace(regex, '<mark class="highlight">$1</mark>');
+    }
+
+    // FAQ 렌더링 함수
+    function renderFAQ() {
+      const trimmedQuery = searchQuery.trim().toLowerCase();
+
+      // 필터링 로직 (카테고리 + 키워드 검색)
+      const filtered = faqData.filter(item => {
+        // 1. 카테고리 조건
+        const categoryMatch = (selectedCategory === "전체") || (item.category === selectedCategory);
+        if (!categoryMatch) return false;
+
+        // 2. 검색어 조건 (질문 또는 답변)
+        if (!trimmedQuery) return true;
+        const questionMatch = item.question.toLowerCase().includes(trimmedQuery);
+        const answerMatch = item.answer_seed.toLowerCase().includes(trimmedQuery);
+
+        return questionMatch || answerMatch;
+      });
+
+      // 결과 건수 업데이트
+      resultCount.textContent = filtered.length;
+
+      // 활성 필터 태그 업데이트
+      if (selectedCategory !== "전체" || trimmedQuery) {
+        let filterText = [];
+        if (selectedCategory !== "전체") filterText.push(`분류: ${selectedCategory}`);
+        if (trimmedQuery) filterText.push(`검색어: "${trimmedQuery}"`);
+        activeFilterBadge.textContent = filterText.join(" · ");
+        activeFilterBadge.classList.remove("hidden");
+      } else {
+        activeFilterBadge.classList.add("hidden");
+      }
+
+      // 검색창 지우기 버튼 노출 여부
+      if (searchQuery.length > 0) {
+        clearSearchBtn.classList.remove("hidden");
+      } else {
+        clearSearchBtn.classList.add("hidden");
+      }
+
+      // 결과 목록 비우기
+      faqList.innerHTML = "";
+
+      // 결과가 없을 때 처리
+      if (filtered.length === 0) {
+        faqList.classList.add("hidden");
+        noResults.classList.remove("hidden");
+        return;
+      }
+
+      faqList.classList.remove("hidden");
+      noResults.classList.add("hidden");
+
+      // FAQ 카드 목록 생성
+      filtered.forEach((item, index) => {
+        const style = categoryStyles[item.category] || { badge: "bg-slate-100 text-slate-700 border-slate-200" };
+        const card = document.createElement("article");
+        card.className = "bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200";
+
+        const highlightedQuestion = highlightText(item.question, trimmedQuery);
+        const highlightedAnswer = highlightText(item.answer_seed, trimmedQuery);
+
+        card.innerHTML = `
+          <!-- 상단: 카테고리 뱃지 -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${style.badge}">
+              ${escapeHtml(item.category)}
+            </span>
+            <span class="text-xs text-slate-400 font-mono">FAQ #${index + 1}</span>
+          </div>
+
+          <!-- 질문 -->
+          <div class="flex items-start gap-3 mb-3">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs mt-0.5">
+              Q
+            </div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+              ${highlightedQuestion}
+            </h2>
+          </div>
+
+          <!-- 답변 -->
+          <div class="flex items-start gap-3 bg-slate-50 rounded-xl p-4 border border-slate-100/80">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs mt-0.5">
+              A
+            </div>
+            <p class="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">
+              ${highlightedAnswer}
+            </p>
+          </div>
+        `;
+
+        faqList.appendChild(card);
+      });
+    }
+
+    // 전체보기 / 초기화 핸들러
+    function resetAll() {
+      selectedCategory = "전체";
+      searchQuery = "";
+      searchInput.value = "";
+      renderCategoryButtons();
+      renderFAQ();
+      searchInput.focus();
+    }
+
+    // 이벤트 리스너 바인딩
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderFAQ();
+    });
+
+    clearSearchBtn.addEventListener("click", () => {
+      searchQuery = "";
+      searchInput.value = "";
+      renderFAQ();
+      searchInput.focus();
+    });
+
+    resetAllBtn.addEventListener("click", resetAll);
+    emptyResetBtn.addEventListener("click", resetAll);
+
+    // 초기 실행
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCategoryButtons();
+      renderFAQ();
+    });
+  </script>
+</body>
+</html>
