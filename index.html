@@ -5,30 +5,164 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>피카츄의 생존일기(지우는나의친구)</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
-            background-color: #111;
+            background-color: #0d0f12;
             color: #fff;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* 전체 레이아웃 (좌측 타임라인 + 우측 게임) */
+        .game-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            background: rgba(22, 27, 34, 0.75);
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 220, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 좌측 진행률 바 컨테이너 */
+        .timeline-sidebar {
+            width: 70px;
+            background: rgba(13, 17, 23, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 18px 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            height: 445px;
+        }
+
+        .timeline-header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffd000;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(255, 208, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline-body {
+            position: relative;
+            flex: 1;
+            display: flex;
+            margin: 6px 0;
+        }
+
+        /* 세로 게이지 트랙 */
+        .progress-track {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 10px;
+            bottom: 10px;
+            width: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .progress-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, #ff9900, #ffee00, #00f2fe);
+            border-radius: 4px;
+            box-shadow: 0 0 14px #ffee00;
+            transition: height 0.2s ease-out;
+        }
+
+        /* 페이즈 마커 목록 */
+        .phase-nodes {
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            right: 0;
+        }
+
+        .phase-node {
+            position: absolute;
+            left: 0;
+            right: 0;
+            transform: translateY(50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .node-pin {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #161b22;
+            border: 2px solid #484f58;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            z-index: 2;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* 달성 및 활성 상태 스타일 */
+        .phase-node.reached .node-pin {
+            border-color: #ffd000;
+            background: #2d2605;
+            box-shadow: 0 0 10px rgba(255, 208, 0, 0.6);
+        }
+
+        .phase-node.active .node-pin {
+            border-color: #00f2fe;
+            background: #0d2938;
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
+            transform: scale(1.15);
+        }
+
+        /* 우측 메인 게임 영역 */
+        .game-main {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            user-select: none;
         }
-        #gameCanvas {
-            background-color: #000;
-            border: 3px solid #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
+
         .header-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 600px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
+
         .info {
             font-size: 18px;
             font-weight: bold;
@@ -36,44 +170,104 @@
             align-items: center;
             gap: 15px;
         }
+
         .invincible-text {
             color: #ffee00;
             text-shadow: 0 0 8px #ff8800;
+            font-size: 15px;
             transition: opacity 0.05s ease;
         }
+
         .test-btn {
             background: linear-gradient(135deg, #ff416c, #ff4b2b);
             color: white;
-            border: 2px solid #fff;
+            border: 2px solid rgba(255, 255, 255, 0.8);
             padding: 6px 14px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             border-radius: 20px;
             cursor: pointer;
             box-shadow: 0 0 10px rgba(255, 75, 43, 0.5);
             transition: all 0.2s ease;
         }
+
         .test-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(255, 75, 43, 0.8);
         }
+
         .test-btn.active {
             background: linear-gradient(135deg, #00b09b, #96c93d);
             box-shadow: 0 0 12px rgba(150, 201, 61, 0.8);
+        }
+
+        #gameCanvas {
+            background-color: #000;
+            border: 3px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+            display: block;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <div class="info">
-            <span>생존 시간: <strong id="score">0</strong>초</span>
-            <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
-        </div>
-        <button id="testBtn" class="test-btn">쫄?</button>
-    </div>
+    <div class="game-wrapper">
+        <!-- 좌측 진행률 바 & 페이즈 타임라인 -->
+        <div class="timeline-sidebar">
+            <div class="timeline-header">
+                <div class="timeline-title">⚡</div>
+            </div>
+            
+            <div class="timeline-body">
+                <!-- 세로 프로그레스 바 트랙 및 그래픽 게이지 -->
+                <div class="progress-track">
+                    <div id="progressBarFill" class="progress-fill"></div>
+                </div>
 
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+                <!-- 페이즈 노드 (아래 0s -> 위 70s) -->
+                <div class="phase-nodes">
+                    <!-- 70s : 클리어 (백만볼트) -->
+                    <div class="phase-node" id="node-70" style="bottom: 100%;">
+                        <div class="node-pin">⚡</div>
+                    </div>
+
+                    <!-- 50s : 사이코키네시스 & 고스트 Phase -->
+                    <div class="phase-node" id="node-50" style="bottom: 71.4%;">
+                        <div class="node-pin">🔮</div>
+                    </div>
+
+                    <!-- 35s : 하이드로펌프 & 스피드 강화 -->
+                    <div class="phase-node" id="node-35" style="bottom: 50%;">
+                        <div class="node-pin">💧</div>
+                    </div>
+
+                    <!-- 18s : 불대문자 & Phase 2 -->
+                    <div class="phase-node" id="node-18" style="bottom: 25.7%;">
+                        <div class="node-pin">🔥</div>
+                    </div>
+
+                    <!-- 0s : 시작 단계 -->
+                    <div class="phase-node active reached" id="node-0" style="bottom: 0%;">
+                        <div class="node-pin">🌱</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측 메인 게임 -->
+        <div class="game-main">
+            <div class="header-container">
+                <div class="info">
+                    <span>생존 시간: <strong id="score">0</strong>초</span>
+                    <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
+                </div>
+                <button id="testBtn" class="test-btn">쫄?</button>
+            </div>
+
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -82,10 +276,17 @@
         const invincibleStatusElement = document.getElementById("invincibleStatus");
         const testBtn = document.getElementById("testBtn");
 
+        // 진행률 바 DOM 엘리먼트
+        const progressBarFill = document.getElementById("progressBarFill");
+        const node0 = document.getElementById("node-0");
+        const node18 = document.getElementById("node-18");
+        const node35 = document.getElementById("node-35");
+        const node50 = document.getElementById("node-50");
+        const node70 = document.getElementById("node-70");
+
         // 무적 모드 상태
         let isTestInvincible = false;
 
-        // testBtn 안전한 이벤트 리스너 바인딩 (Null 에러 방지)
         if (testBtn) {
             testBtn.addEventListener("click", () => {
                 isTestInvincible = !isTestInvincible;
@@ -251,7 +452,7 @@
         let zapdoses = [];
         let ghosts = [];
         let thunderStones = [];
-        let auraParticles = [];
+        let electricSparkParticles = [];
 
         window.addEventListener("keydown", (e) => {
             if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D"].includes(e.key)) {
@@ -267,6 +468,40 @@
         window.addEventListener("keyup", (e) => {
             keys[e.key] = false;
         });
+
+        // 진행률 게이지 바 전용 업데이트 함수 (% 텍스트 제외)
+        function updateProgressBar() {
+            const TARGET_TIME = 70; // 70초 달성 시 승리
+            const rawPercent = Math.min(100, Math.max(0, (survivalTime / TARGET_TIME) * 100));
+
+            if (progressBarFill) {
+                progressBarFill.style.height = `${rawPercent}%`;
+            }
+
+            const nodes = [
+                { el: node0, time: 0 },
+                { el: node18, time: 18 },
+                { el: node35, time: 35 },
+                { el: node50, time: 50 },
+                { el: node70, time: 70 }
+            ];
+
+            let currentActiveIndex = 0;
+            nodes.forEach((n, idx) => {
+                if (!n.el) return;
+                if (survivalTime >= n.time) {
+                    n.el.classList.add("reached");
+                    currentActiveIndex = idx;
+                } else {
+                    n.el.classList.remove("reached");
+                }
+                n.el.classList.remove("active");
+            });
+
+            if (nodes[currentActiveIndex] && nodes[currentActiveIndex].el) {
+                nodes[currentActiveIndex].el.classList.add("active");
+            }
+        }
 
         function getSpawnPosition() {
             let spawnX, spawnY;
@@ -479,7 +714,6 @@
             magikarpInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnMagikarp(); }, 15000);
             zapdosInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnZapdos(); }, 20000);
 
-            // 번개의돌: 게임 시작 8초 후 첫 스폰, 이후 8초마다 등장
             thunderStoneTimeout = setTimeout(() => {
                 if (!isGameOver && !isGameWon) {
                     spawnThunderStone();
@@ -521,7 +755,7 @@
             zapdoses = [];
             ghosts = [];
             thunderStones = [];
-            auraParticles = [];
+            electricSparkParticles = [];
 
             nextMewtwoSpawnTime = 30;
             isGhostPhase = false;
@@ -548,6 +782,7 @@
 
             startTime = Date.now();
             lastTime = performance.now();
+            updateProgressBar();
             startSpecialTimers();
             requestAnimationFrame(gameLoop);
         }
@@ -564,6 +799,7 @@
             if (!isThunderboltActive && !isGameWon) {
                 survivalTime = Math.floor((Date.now() - startTime) / 1000);
                 if (scoreElement) scoreElement.textContent = survivalTime;
+                updateProgressBar();
             }
 
             // 이벤트 제어 로직
@@ -696,6 +932,7 @@
                 thunderboltTimer += dt; 
                 if (thunderboltTimer >= 2.5) {
                     isGameWon = true;
+                    updateProgressBar();
                 }
             }
 
@@ -763,7 +1000,6 @@
                     blastoise.x += 400 * dt;
                     if (blastoise.x > CANVAS_WIDTH + 360) {
                         blastoise = null;
-                        // 거북왕 퇴장 완료 시: 기본 이동속도를 부스트 속도로 영구 고정
                         isBlastoiseEventFinished = true;
                         pikachu.normalSpeed = pikachu.boostedSpeed;
                         pikachu.speed = pikachu.boostedSpeed;
@@ -851,27 +1087,30 @@
                 if (fp.life <= 0) fireParticles.splice(i, 1);
             }
 
-            // 아우라 파티클 업데이트
+            // 무적 전기 스파크 파티클 생성
             if (pikachu.isInvincible || isTestInvincible) {
-                for (let i = 0; i < 2; i++) {
-                    auraParticles.push({
-                        x: pikachu.x + (Math.random() - 0.5) * 22,
-                        y: pikachu.y + 8 + (Math.random() - 0.5) * 6,
-                        vx: (Math.random() - 0.5) * 12,
-                        vy: -Math.random() * 80 - 50,
-                        size: Math.random() * 2.5 + 1.5,
+                for (let i = 0; i < 3; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 8 + Math.random() * 20;
+                    electricSparkParticles.push({
+                        x: pikachu.x + Math.cos(angle) * dist,
+                        y: pikachu.y + Math.sin(angle) * dist,
+                        vx: (Math.random() - 0.5) * 220,
+                        vy: (Math.random() - 0.5) * 220,
+                        size: Math.random() * 2.5 + 1.2,
                         life: 1.0,
-                        decay: Math.random() * 3.5 + 3.0
+                        decay: Math.random() * 8.0 + 5.0,
+                        color: Math.random() > 0.5 ? '#ffff00' : (Math.random() > 0.3 ? '#00ffff' : '#ffffff')
                     });
                 }
             }
 
-            for (let i = auraParticles.length - 1; i >= 0; i--) {
-                const p = auraParticles[i];
+            for (let i = electricSparkParticles.length - 1; i >= 0; i--) {
+                const p = electricSparkParticles[i];
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
                 p.life -= p.decay * dt;
-                if (p.life <= 0) auraParticles.splice(i, 1);
+                if (p.life <= 0) electricSparkParticles.splice(i, 1);
             }
 
             // 무적 타이머
@@ -891,7 +1130,7 @@
                     pikachu.isInvincible = false;
                     pikachu.speed = pikachu.normalSpeed;
                     if (invincibleStatusElement) invincibleStatusElement.style.display = "none";
-                    auraParticles = [];
+                    electricSparkParticles = [];
                 }
             }
 
@@ -990,49 +1229,92 @@
             }
         }
 
-        function drawSuperSaiyanAura(x, y) {
+        // 무적 상태일 때 피카츄/라이츄를 감싸는 찌직거리는 전기장 필드 애니메이션
+        function drawElectricField(x, y) {
             if (!ctx) return;
-            const time = performance.now() * 0.008;
+            const time = performance.now() * 0.015;
             ctx.save();
             ctx.globalCompositeOperation = "lighter";
 
-            drawAuraLayer(x, y, 22, 30, "rgba(255, 140, 0, 0.4)", "rgba(255, 100, 0, 0.8)", time, 0);
-            drawAuraLayer(x, y, 18, 24, "rgba(255, 230, 0, 0.6)", "rgba(255, 200, 0, 0.9)", time, 1);
-            drawAuraLayer(x, y, 14, 18, "rgba(255, 255, 180, 0.8)", "#ffffff", time, 2);
+            // 1. 외곽 전자기장 구형 구 글로우
+            const baseRadius = 26;
+            const pulse = Math.sin(time * 12) * 3;
+            const currentRadius = baseRadius + pulse;
 
-            auraParticles.forEach(p => {
-                ctx.fillStyle = `rgba(255, 255, 150, ${p.life})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.restore();
-        }
+            const grad = ctx.createRadialGradient(x, y, 4, x, y, currentRadius + 12);
+            grad.addColorStop(0, "rgba(255, 255, 220, 0.45)");
+            grad.addColorStop(0.4, "rgba(0, 242, 254, 0.35)");
+            grad.addColorStop(1, "rgba(0, 242, 254, 0)");
 
-        function drawAuraLayer(cx, cy, rx, ry, fillColor, strokeColor, time, seed) {
-            if (!ctx) return;
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            const numPoints = 12;
-            for (let i = 0; i < numPoints; i++) {
-                const angle = (i / numPoints) * Math.PI * 2;
-                let currRx = rx;
-                let currRy = ry;
-                const upFactor = Math.sin(angle);
-                if (upFactor < 0) currRy *= (1 - upFactor * 0.6);
-
-                const flicker = Math.sin(angle * 4 + time * 8 + seed) * 2.5 + (Math.random() - 0.5) * 3;
-                const px = cx + Math.cos(angle) * (currRx + flicker);
-                const py = cy + Math.sin(angle) * (currRy + flicker);
-
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-            ctx.fillStyle = fillColor;
+            ctx.arc(x, y, currentRadius + 12, 0, Math.PI * 2);
             ctx.fill();
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = strokeColor;
-            ctx.stroke();
+
+            // 2. 피카츄 주위를 둘러싸며 고속으로 찌직거리는 전기 아크선들
+            const numArcs = 6;
+            for (let a = 0; a < numArcs; a++) {
+                ctx.beginPath();
+                const startAngle = (a / numArcs) * Math.PI * 2 + Math.sin(time * 4 + a * 2) * 0.4;
+                const endAngle = startAngle + (Math.PI / numArcs) * (1.2 + Math.random() * 0.5);
+                const arcSegments = 5;
+
+                ctx.strokeStyle = a % 2 === 0 ? "#ffff00" : (a % 3 === 0 ? "#00ffff" : "#ffffff");
+                ctx.lineWidth = 2 + Math.random() * 1.5;
+                ctx.shadowColor = a % 2 === 0 ? "#ffff00" : "#00f2fe";
+                ctx.shadowBlur = 12;
+
+                for (let i = 0; i <= arcSegments; i++) {
+                    const angle = startAngle + (endAngle - startAngle) * (i / arcSegments);
+                    const rJitter = currentRadius + (Math.random() - 0.5) * 11;
+                    const px = x + Math.cos(angle) * rJitter;
+                    const py = y + Math.sin(angle) * rJitter;
+
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+
+            // 3. 캐릭터 중심에서 밖으로 방사형으로 사방으로 튀는 번개 줄기
+            const numSparks = 4;
+            for (let s = 0; s < numSparks; s++) {
+                const angle = Math.random() * Math.PI * 2;
+                const innerR = 6 + Math.random() * 6;
+                const outerR = currentRadius + 6 + Math.random() * 14;
+
+                const x1 = x + Math.cos(angle) * innerR;
+                const y1 = y + Math.sin(angle) * innerR;
+                const x2 = x + Math.cos(angle) * outerR;
+                const y2 = y + Math.sin(angle) * outerR;
+
+                ctx.strokeStyle = Math.random() > 0.3 ? "#ffffff" : "#ffee00";
+                ctx.lineWidth = 1.8;
+                ctx.shadowColor = "#ffffff";
+                ctx.shadowBlur = 10;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                const midX = (x1 + x2) / 2 + (Math.random() - 0.5) * 16;
+                const midY = (y1 + y2) / 2 + (Math.random() - 0.5) * 16;
+                ctx.lineTo(midX, midY);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            // 4. 스파크 입자 파티클들 (직선형 스파크 표현)
+            electricSparkParticles.forEach(p => {
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = p.size;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + p.vx * 0.06, p.y + p.vy * 0.06);
+                ctx.stroke();
+            });
+
+            ctx.restore();
         }
 
         function drawBlazingFireBlast(x, y, width, height) {
@@ -1179,10 +1461,11 @@
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
             }
 
+            // 무적 상태 시 찌직거리는 전기장 필드 그리기
             if (pikachu.isInvincible || isTestInvincible) {
-                const shouldDrawAura = isTestInvincible || pikachu.invincibleTimer > 1.5 || (Math.floor(pikachu.invincibleTimer * 12) % 2 === 0);
-                if (shouldDrawAura) {
-                    drawSuperSaiyanAura(pikachu.x, pikachu.y);
+                const shouldDrawField = isTestInvincible || pikachu.invincibleTimer > 1.5 || (Math.floor(pikachu.invincibleTimer * 12) % 2 === 0);
+                if (shouldDrawField) {
+                    drawElectricField(pikachu.x, pikachu.y);
                 }
             }
 
@@ -1384,6 +1667,7 @@
             }
         }
 
+        updateProgressBar();
         startSpecialTimers();
         requestAnimationFrame(gameLoop);
     </script>
