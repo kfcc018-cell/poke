@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>피카츄 장애물 피하기 - 불대문자 리자몽</title>
+    <title>피카츄 장애물 피하기 - 거대 불대문자 리자몽</title>
     <style>
         body {
             background-color: #111;
@@ -56,7 +56,7 @@
         let magikarpLoaded = false, mewLoaded = false;
         let pidgeotLoaded = false, gyaradosLoaded = false;
         let zapdosLoaded = false, hoohLoaded = false;
-        let thunderStoneLoaded = false;
+        let thunderStoneLoaded = false, fireBlastLoaded = false;
 
         const BASE_CDN = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/";
 
@@ -87,6 +87,11 @@
         const thunderStoneImg = new Image();
         thunderStoneImg.onload = () => thunderStoneLoaded = true;
         thunderStoneImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23ffea00' opacity='0.25'/%3E%3Cpolygon points='50,6 88,26 92,68 50,94 8,68 12,26' fill='%23cc7a00' stroke='%23ffea00' stroke-width='4'/%3E%3Cpolygon points='50,12 82,30 85,64 50,88 15,64 18,30' fill='%23ff9900'/%3E%3Cpolygon points='50,12 50,88 85,64' fill='%23b36200' opacity='0.4'/%3E%3Cpolygon points='50,12 18,30 15,64' fill='%23ffbf00' opacity='0.5'/%3E%3Cpath d='M58,14 L28,50 L48,50 L38,86 L74,42 L52,42 Z' fill='%23ffffff' stroke='%23111111' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M56,17 L32,48 L48,48 L40,81 L70,44 L53,44 Z' fill='%23ffff00'/%3E%3C/svg%3E";
+
+        // 공식 디자인 스타일의 불대문자(大) 고해상도 그래픽
+        const fireBlastImg = new Image();
+        fireBlastImg.onload = () => fireBlastLoaded = true;
+        fireBlastImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cdefs%3E%3CradialGradient id='flameGlow' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffaa' stop-opacity='1'/%3E%3Cstop offset='40%25' stop-color='%23ffaa00' stop-opacity='0.9'/%3E%3Cstop offset='80%25' stop-color='%23ff2200' stop-opacity='0.7'/%3E%3Cstop offset='100%25' stop-color='%23880000' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cfilter id='blurGlow'%3E%3CfeGaussianBlur stdDeviation='6'/%3E%3C/filter%3E%3C/defs%3E%3Ccircle cx='150' cy='150' r='140' fill='url(%23flameGlow)'/%3E%3Cpath d='M150,20 L168,110 L250,60 L185,145 L280,180 L180,185 L220,280 L150,210 L80,280 L120,185 L20,180 L115,145 L50,60 L132,110 Z' fill='%23ff1100' filter='url(%23blurGlow)' opacity='0.8'/%3E%3Cpath d='M150,30 L165,115 L240,70 L180,148 L265,180 L175,185 L210,270 L150,200 L90,270 L125,185 L35,180 L120,148 L60,70 L135,115 Z' fill='%23ff7700'/%3E%3Cpath d='M150,45 L160,120 L225,85 L175,150 L245,180 L170,185 L195,255 L150,190 L105,255 L130,185 L55,180 L125,150 L75,85 L140,120 Z' fill='%23ffdd00'/%3E%3Cpath d='M150,65 L155,125 L205,100 L170,152 L220,180 L165,185 L180,235 L150,180 L120,235 L135,185 L80,180 L130,152 L95,100 L145,125 Z' fill='%23ffffff'/%3E%3C/svg%3E";
 
         const CANVAS_WIDTH = canvas.width;
         const CANVAS_HEIGHT = canvas.height;
@@ -299,7 +304,7 @@
             survivalTime = Math.floor((Date.now() - startTime) / 1000);
             scoreElement.textContent = survivalTime;
 
-            // 22초 거대 리자몽 등장 및 불대문자 발사 이벤트
+            // 22초 거대 리자몽 등장 및 불대문자 이벤트
             if (survivalTime >= 22 && !charizardTriggered) {
                 charizardTriggered = true;
                 isPhase2 = true;
@@ -313,17 +318,20 @@
                 };
             }
 
-            // 리자몽 동작 애니메이션
+            // 리자몽 동작 상태 업데이트
             if (charizard) {
                 if (charizard.state === 'entering') {
                     charizard.x -= 350 * dt;
                     if (charizard.x <= charizard.targetX) {
                         charizard.x = charizard.targetX;
                         charizard.state = 'firing';
+                        // 화면 높이의 70%(280px) 크기의 불대문자 생성
                         fireBlast = {
-                            x: charizard.x - 40,
+                            x: charizard.x - 50,
                             y: CANVAS_HEIGHT / 2,
-                            vx: -600
+                            vx: -600,
+                            drawWidth: 280,
+                            drawHeight: 280
                         };
                     }
                 } else if (charizard.state === 'firing') {
@@ -338,29 +346,31 @@
                 }
             }
 
-            // 불대문자(大) 이동 및 적 스와이핑 제거
+            // 거대 불대문자(大) 이동 및 화면의 적 전멸
             if (fireBlast) {
                 fireBlast.x += fireBlast.vx * dt;
 
-                for (let i = 0; i < 3; i++) {
+                // 불꽃 불티 파티클
+                for (let i = 0; i < 4; i++) {
                     fireParticles.push({
-                        x: fireBlast.x + (Math.random() - 0.5) * 40,
-                        y: fireBlast.y + (Math.random() - 0.5) * 100,
-                        vx: Math.random() * 100 + 50,
-                        vy: (Math.random() - 0.5) * 60,
-                        size: Math.random() * 6 + 3,
+                        x: fireBlast.x + (Math.random() - 0.5) * 100,
+                        y: fireBlast.y + (Math.random() - 0.5) * 200,
+                        vx: Math.random() * 150 + 50,
+                        vy: (Math.random() - 0.5) * 100,
+                        size: Math.random() * 8 + 4,
                         life: 1.0,
                         decay: Math.random() * 3 + 2
                     });
                 }
 
-                const isSwept = (obj) => obj.x > fireBlast.x - 80;
+                // 280px 높이의 거대 불대문자가 지나는 범위 내 모든 적 제거
+                const isSwept = (obj) => Math.abs(obj.y - fireBlast.y) < 160 && obj.x > fireBlast.x - 130;
                 slowpokes = slowpokes.filter(s => !isSwept(s));
                 magikarps = magikarps.filter(m => !isSwept(m));
                 pidgeots = pidgeots.filter(p => !isSwept(p));
                 zapdoses = zapdoses.filter(z => !isSwept(z));
 
-                if (fireBlast.x < -200) {
+                if (fireBlast.x < -300) {
                     fireBlast = null;
                 }
             }
@@ -543,38 +553,6 @@
             ctx.stroke();
         }
 
-        function drawFireBlastSkill(x, y) {
-            ctx.save();
-            ctx.translate(x, y);
-
-            fireParticles.forEach(fp => {
-                ctx.fillStyle = `rgba(255, ${Math.floor(fp.life * 200)}, 0, ${fp.life})`;
-                ctx.beginPath();
-                ctx.arc(fp.x - x, fp.y - y, fp.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            ctx.shadowBlur = 30;
-            ctx.shadowColor = "#ff2200";
-
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-
-            ctx.font = "900 180px 'Arial', sans-serif";
-            ctx.fillStyle = "#ff2200";
-            ctx.fillText("大", 0, 0);
-
-            ctx.font = "900 165px 'Arial', sans-serif";
-            ctx.fillStyle = "#ff8800";
-            ctx.fillText("大", 0, 0);
-
-            ctx.font = "900 150px 'Arial', sans-serif";
-            ctx.fillStyle = "#ffff88";
-            ctx.fillText("大", 0, 0);
-
-            ctx.restore();
-        }
-
         function draw() {
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -657,10 +635,30 @@
                 }
             });
 
+            // 불대문자 투사체 파티클 및 거대 이미지 렌더링 (화면 높이의 70%)
             if (fireBlast) {
-                drawFireBlastSkill(fireBlast.x, fireBlast.y);
+                ctx.save();
+                // 불꽃 불티
+                fireParticles.forEach(fp => {
+                    ctx.fillStyle = `rgba(255, ${Math.floor(fp.life * 200)}, 0, ${fp.life})`;
+                    ctx.beginPath();
+                    ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                if (fireBlastLoaded) {
+                    ctx.drawImage(
+                        fireBlastImg,
+                        fireBlast.x - fireBlast.drawWidth / 2,
+                        fireBlast.y - fireBlast.drawHeight / 2,
+                        fireBlast.drawWidth,
+                        fireBlast.drawHeight
+                    );
+                }
+                ctx.restore();
             }
 
+            // 우측 화면 거대 리자몽
             if (charizard && charizardLoaded) {
                 ctx.drawImage(charizardImg, charizard.x - charizard.drawWidth / 2, charizard.y - charizard.drawHeight / 2, charizard.drawWidth, charizard.drawHeight);
             }
