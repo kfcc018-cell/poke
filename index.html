@@ -62,7 +62,7 @@
 
         function loadImage(url, onLoad) {
             const img = new Image();
-            img.crossOrigin = "anonymous";
+            // 캔버스 CORS(교차 출처 리소스 공유) 차단 오류를 방지하기 위해 crossOrigin 속성 제거
             img.onload = onLoad;
             img.src = url;
             return img;
@@ -84,18 +84,18 @@
         const zapdosImg = loadImage(`${BASE_CDN}145.png`, () => zapdosLoaded = true);
         const hoohImg = loadImage(`${BASE_CDN}250.png`, () => hoohLoaded = true);
 
-        // 무인편 클래식 지우 이미지
-        const ashImg = loadImage("https://archives.bulbagarden.net/media/upload/0/00/Ash_OS.png", () => ashLoaded = true);
+        // 지우 이미지 변경 (오류 방지를 위해 안정적인 외부 포켓몬 쇼다운 스프라이트로 적용)
+        const ashImg = loadImage("https://play.pokemonshowdown.com/sprites/trainers/ash.png", () => ashLoaded = true);
 
         // 번개의돌 SVG
         const thunderStoneImg = new Image();
         thunderStoneImg.onload = () => thunderStoneLoaded = true;
         thunderStoneImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23ffea00' opacity='0.25'/%3E%3Cpolygon points='50,6 88,26 92,68 50,94 8,68 12,26' fill='%23cc7a00' stroke='%23ffea00' stroke-width='4'/%3E%3Cpolygon points='50,12 82,30 85,64 50,88 15,64 18,30' fill='%23ff9900'/%3E%3Cpolygon points='50,12 50,88 85,64' fill='%23b36200' opacity='0.4'/%3E%3Cpolygon points='50,12 18,30 15,64' fill='%23ffbf00' opacity='0.5'/%3E%3Cpath d='M58,14 L28,50 L48,50 L38,86 L74,42 L52,42 Z' fill='%23ffffff' stroke='%23111111' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M56,17 L32,48 L48,48 L40,81 L70,44 L53,44 Z' fill='%23ffff00'/%3E%3C/svg%3E";
 
-        // 애니메이션 캡처 이미지 속 '大' 자 불꽃 모양 구현 (노란색 핵과 붉은 외곽 화염)
+        // 애니메이션 캡처 이미지 속 '大' 자 불꽃 모양 구현 (노란색 외곽선과 주황색 굵은 핵)
         const fireBlastImg = new Image();
         fireBlastImg.onload = () => fireBlastLoaded = true;
-        fireBlastImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cdefs%3E%3Cfilter id='glow' x='-30%25' y='-30%25' width='160%25' height='160%25'%3E%3CfeGaussianBlur stdDeviation='10' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23glow)'%3E%3Cpath d='M150,45 L150,150 M55,115 L245,105 M150,150 L65,270 M150,150 L235,255' stroke='%23ff2200' stroke-width='50' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='150' cy='45' r='35' fill='%23ff2200'/%3E%3Ccircle cx='55' cy='115' r='35' fill='%23ff2200'/%3E%3Ccircle cx='245' cy='105' r='38' fill='%23ff2200'/%3E%3Ccircle cx='65' cy='270' r='35' fill='%23ff2200'/%3E%3Ccircle cx='235' cy='255' r='42' fill='%23ff2200'/%3E%3Cpath d='M150,45 L150,150 M55,115 L245,105 M150,150 L65,270 M150,150 L235,255' stroke='%23ff7700' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='150' cy='45' r='26' fill='%23ff7700'/%3E%3Ccircle cx='55' cy='115' r='26' fill='%23ff7700'/%3E%3Ccircle cx='245' cy='105' r='28' fill='%23ff7700'/%3E%3Ccircle cx='65' cy='270' r='26' fill='%23ff7700'/%3E%3Ccircle cx='235' cy='255' r='32' fill='%23ff7700'/%3E%3Cpath d='M150,45 L150,150 M55,115 L245,105 M150,150 L65,270 M150,150 L235,255' stroke='%23ffff22' stroke-width='22' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='150' cy='45' r='16' fill='%23ffff22'/%3E%3Ccircle cx='55' cy='115' r='16' fill='%23ffff22'/%3E%3Ccircle cx='245' cy='105' r='18' fill='%23ffff22'/%3E%3Ccircle cx='65' cy='270' r='16' fill='%23ffff22'/%3E%3Ccircle cx='235' cy='255' r='20' fill='%23ffff22'/%3E%3Cpath d='M150,45 L150,150 M55,115 L245,105 M150,150 L65,270 M150,150 L235,255' stroke='%23ffffff' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='150' cy='150' r='18' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E";
+        fireBlastImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cfilter id='animeFire' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.5' result='blur' /%3E%3CfeMerge%3E%3CfeMergeNode in='blur' /%3E%3CfeMergeNode in='SourceGraphic' /%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23animeFire)'%3E%3Cpath d='M 35,90 Q 95,85 165,85 M 100,25 Q 95,95 40,175 M 105,85 Q 145,130 165,170' stroke='%23ffcc00' stroke-width='42' stroke-linecap='round' stroke-linejoin='round' fill='none' /%3E%3Cpath d='M 35,90 Q 95,85 165,85 M 100,25 Q 95,95 40,175 M 105,85 Q 145,130 165,170' stroke='%23ea5514' stroke-width='24' stroke-linecap='round' stroke-linejoin='round' fill='none' /%3E%3C/g%3E%3C/svg%3E";
 
         const CANVAS_WIDTH = canvas.width;
         const CANVAS_HEIGHT = canvas.height;
@@ -309,36 +309,41 @@
             survivalTime = Math.floor((Date.now() - startTime) / 1000);
             scoreElement.textContent = survivalTime;
 
+            // 22초에 지우 등장 이벤트 발생
             if (survivalTime >= 22 && !charizardTriggered) {
                 charizardTriggered = true;
                 isPhase2 = true;
 
                 ash = {
-                    x: CANVAS_WIDTH + 80,
+                    x: CANVAS_WIDTH + 120,
                     y: CANVAS_HEIGHT / 2 + 75,
-                    targetX: CANVAS_WIDTH - 60,
-                    drawWidth: 75,
-                    drawHeight: 115,
-                    state: 'entering'
-                };
-
-                charizard = {
-                    x: CANVAS_WIDTH + 150,
-                    y: CANVAS_HEIGHT / 2 - 35,
-                    targetX: CANVAS_WIDTH - 110,
-                    drawWidth: 170,
-                    drawHeight: 170,
-                    state: 'waiting'
+                    targetX: CANVAS_WIDTH - 100, // 크기가 커진 만큼 자연스럽게 보이도록 위치 조정
+                    drawWidth: 180, // 기존 90에서 2배로 크기 확대
+                    drawHeight: 180, // 기존 90에서 2배로 크기 확대
+                    state: 'entering',
+                    timer: 0
                 };
             }
 
             if (ash) {
                 if (ash.state === 'entering') {
-                    ash.x -= 350 * dt;
+                    ash.x -= 300 * dt;
                     if (ash.x <= ash.targetX) {
                         ash.x = ash.targetX;
                         ash.state = 'shouting';
-                        charizard.state = 'entering';
+                    }
+                } else if (ash.state === 'shouting') {
+                    ash.timer += dt;
+                    // 지우가 1.5초간 외친 후 리자몽 등장
+                    if (ash.timer > 1.5 && !charizard) {
+                        charizard = {
+                            x: CANVAS_WIDTH + 150,
+                            y: CANVAS_HEIGHT / 2 - 35,
+                            targetX: CANVAS_WIDTH - 120,
+                            drawWidth: 170,
+                            drawHeight: 170,
+                            state: 'entering'
+                        };
                     }
                 } else if (ash.state === 'leaving') {
                     ash.x += 350 * dt;
@@ -363,7 +368,7 @@
                 } else if (charizard.state === 'firing') {
                     if (!fireBlast) {
                         charizard.state = 'leaving';
-                        if (ash) ash.state = 'leaving';
+                        if (ash) ash.state = 'leaving'; // 불대문자가 화면에서 사라지면 지우와 리자몽 동시 퇴장
                     }
                 } else if (charizard.state === 'leaving') {
                     charizard.x += 350 * dt;
@@ -713,16 +718,33 @@
                 ctx.restore();
             }
 
-            // 전달해주신 한지우 이미지 렌더링
-            if (ash && ashLoaded) {
-                ctx.drawImage(ashImg, ash.x - ash.drawWidth / 2, ash.y - ash.drawHeight / 2, ash.drawWidth, ash.drawHeight);
-                if (ash.state === 'shouting' || ash.state === 'leaving') {
+            // 지우 렌더링 및 등장 이후 쭉 말풍선 띄우기
+            if (ash) {
+                if (ashLoaded) {
+                    ctx.drawImage(ashImg, ash.x - ash.drawWidth / 2, ash.y - ash.drawHeight / 2, ash.drawWidth, ash.drawHeight);
+                } else {
+                    // 이미지가 로드되지 않았을 때를 대비한 예비 출력
+                    ctx.font = "40px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("👦🏻🧢", ash.x, ash.y);
+                }
+                
+                if (ash.state !== 'entering') {
                     drawSpeechBubble(ash.x, ash.y - ash.drawHeight / 2, "리자몽, 불대문자!");
                 }
             }
 
-            if (charizard && charizardLoaded) {
-                ctx.drawImage(charizardImg, charizard.x - charizard.drawWidth / 2, charizard.y - charizard.drawHeight / 2, charizard.drawWidth, charizard.drawHeight);
+            if (charizard) {
+                if (charizardLoaded) {
+                    ctx.drawImage(charizardImg, charizard.x - charizard.drawWidth / 2, charizard.y - charizard.drawHeight / 2, charizard.drawWidth, charizard.drawHeight);
+                } else {
+                    // 이미지가 로드되지 않았을 때를 대비한 예비 출력
+                    ctx.font = "60px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("🐲🔥", charizard.x, charizard.y);
+                }
             }
 
             if (isGameOver) {
