@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>피카츄 장애물 피하기 - 불대문자 리자몽 & 지우</title>
+    <title>피카츄 장애물 피하기 - 불대문자 리자몽 & 레드</title>
     <style>
         body {
             background-color: #111;
@@ -16,32 +16,64 @@
             height: 100vh;
             margin: 0;
             user-select: none;
+            position: relative;
         }
         #gameCanvas {
             background-color: #000;
             border: 3px solid #fff;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
-        .info {
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 600px;
             margin-bottom: 10px;
-            font-size: 20px;
+        }
+        .info {
+            font-size: 18px;
             font-weight: bold;
             display: flex;
-            gap: 20px;
+            align-items: center;
+            gap: 15px;
         }
         .invincible-text {
             color: #ffee00;
             text-shadow: 0 0 8px #ff8800;
             transition: opacity 0.05s ease;
         }
+        .test-btn {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            border: 2px solid #fff;
+            padding: 6px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 75, 43, 0.5);
+            transition: all 0.2s ease;
+        }
+        .test-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 75, 43, 0.8);
+        }
+        .test-btn.active {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            box-shadow: 0 0 12px rgba(150, 201, 61, 0.8);
+        }
     </style>
 </head>
 <body>
 
-    <div class="info">
-        <span>버틴 시간: <strong id="score">0</strong>초</span>
-        <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
+    <div class="header-container">
+        <div class="info">
+            <span>버틴 시간: <strong id="score">0</strong>초</span>
+            <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
+        </div>
+        <button id="testBtn" class="test-btn">자신없으면클릭</button>
     </div>
+
     <canvas id="gameCanvas" width="600" height="400"></canvas>
 
     <script>
@@ -49,28 +81,74 @@
         const ctx = canvas.getContext("2d");
         const scoreElement = document.getElementById("score");
         const invincibleStatusElement = document.getElementById("invincibleStatus");
+        const testBtn = document.getElementById("testBtn");
+
+        // 무적 모드 상태
+        let isTestInvincible = false;
+
+        testBtn.addEventListener("click", () => {
+            isTestInvincible = !isTestInvincible;
+            if (isTestInvincible) {
+                testBtn.classList.add("active");
+                pikachu.isInvincible = true;
+                invincibleStatusElement.textContent = "🛡️ 무적 모드 활성화 중!";
+                invincibleStatusElement.style.display = "inline";
+                invincibleStatusElement.style.opacity = "1";
+            } else {
+                testBtn.classList.remove("active");
+                // 즉시 무적 상태 해제
+                pikachu.isInvincible = false;
+                pikachu.invincibleTimer = 0;
+                pikachu.speed = pikachu.normalSpeed;
+                invincibleStatusElement.style.display = "none";
+            }
+        });
 
         // 이미지 로딩 관리
-        let pikachuLoaded = false, raichuLoaded = false, charizardLoaded = false, ashLoaded = false;
+        let pikachuLoaded = false, raichuLoaded = false, charizardLoaded = false, redLoaded = false;
+        let blastoiseLoaded = false, mewtwoLoaded = false, alakazamLoaded = false, oakLoaded = false;
         let slowpokeLoaded = false, slowkingLoaded = false;
         let magikarpLoaded = false, mewLoaded = false;
-        let pidgeotLoaded = false, gyaradosLoaded = false;
-        let zapdosLoaded = false, hoohLoaded = false;
-        let thunderStoneLoaded = false, fireBlastLoaded = false;
+        let pidgeotLoaded = false, gyaradosLoaded = false, caterpieLoaded = false;
+        let zapdosLoaded = false, hoohLoaded = false, weedleLoaded = false;
+        let gastlyLoaded = false, haunterLoaded = false, gengarLoaded = false;
+        let thunderStoneLoaded = false;
 
         const BASE_CDN = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/";
 
-        function loadImage(url, onLoad) {
+        function loadImage(url, onLoad, onErrorFallback) {
             const img = new Image();
-            // 캔버스 CORS(교차 출처 리소스 공유) 차단 오류를 방지하기 위해 crossOrigin 속성 제거
             img.onload = onLoad;
+            img.onerror = () => {
+                if (onErrorFallback) onErrorFallback();
+            };
             img.src = url;
             return img;
         }
 
         const pikachuImg = loadImage(`${BASE_CDN}25.png`, () => pikachuLoaded = true);
         const raichuImg = loadImage(`${BASE_CDN}26.png`, () => raichuLoaded = true);
-        const charizardImg = loadImage(`${BASE_CDN}6.png`, () => charizardLoaded = true);
+        const charizardImg = loadImage("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png", () => charizardLoaded = true);
+        const blastoiseImg = loadImage("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png", () => blastoiseLoaded = true);
+        const alakazamImg = loadImage("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/65.png", () => alakazamLoaded = true);
+        const mewtwoImg = loadImage(`${BASE_CDN}150.png`, () => mewtwoLoaded = true);
+
+        // 오키드(오박사) 이미지
+        const oakImg = loadImage("https://play.pokemonshowdown.com/sprites/trainers/oak.png", 
+            () => oakLoaded = true,
+            () => {
+                oakImg.src = "https://raw.githubusercontent.com/smogon/sprites/master/sprites/trainers/oak.png";
+                oakImg.onload = () => oakLoaded = true;
+                oakImg.onerror = () => {
+                    oakImg.src = "https://play.pokemonshowdown.com/sprites/trainers/professoroak.png";
+                    oakImg.onload = () => oakLoaded = true;
+                    oakImg.onerror = () => {
+                        oakImg.src = "https://raw.githubusercontent.com/smogon/sprites/master/sprites/trainers/professoroak.png";
+                        oakImg.onload = () => oakLoaded = true;
+                    };
+                };
+            }
+        );
 
         const slowpokeImg = loadImage(`${BASE_CDN}79.png`, () => slowpokeLoaded = true);
         const slowkingImg = loadImage(`${BASE_CDN}199.png`, () => slowkingLoaded = true);
@@ -80,22 +158,28 @@
 
         const pidgeotImg = loadImage(`${BASE_CDN}18.png`, () => pidgeotLoaded = true);
         const gyaradosImg = loadImage(`${BASE_CDN}130.png`, () => gyaradosLoaded = true);
+        const caterpieImg = loadImage(`${BASE_CDN}10.png`, () => caterpieLoaded = true);
 
         const zapdosImg = loadImage(`${BASE_CDN}145.png`, () => zapdosLoaded = true);
         const hoohImg = loadImage(`${BASE_CDN}250.png`, () => hoohLoaded = true);
+        const weedleImg = loadImage(`${BASE_CDN}13.png`, () => weedleLoaded = true);
 
-        // 지우 이미지 변경 (오류 방지를 위해 안정적인 외부 포켓몬 쇼다운 스프라이트로 적용)
-        const ashImg = loadImage("https://play.pokemonshowdown.com/sprites/trainers/ash.png", () => ashLoaded = true);
+        const gastlyImg = loadImage(`${BASE_CDN}92.png`, () => gastlyLoaded = true);
+        const haunterImg = loadImage(`${BASE_CDN}93.png`, () => haunterLoaded = true);
+        const gengarImg = loadImage(`${BASE_CDN}94.png`, () => gengarLoaded = true);
+
+        const redImg = loadImage("https://play.pokemonshowdown.com/sprites/trainers/red.png", 
+            () => redLoaded = true,
+            () => {
+                redImg.src = "https://raw.githubusercontent.com/smogon/sprites/master/sprites/trainers/red.png";
+                redImg.onload = () => redLoaded = true;
+            }
+        );
 
         // 번개의돌 SVG
         const thunderStoneImg = new Image();
         thunderStoneImg.onload = () => thunderStoneLoaded = true;
         thunderStoneImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23ffea00' opacity='0.25'/%3E%3Cpolygon points='50,6 88,26 92,68 50,94 8,68 12,26' fill='%23cc7a00' stroke='%23ffea00' stroke-width='4'/%3E%3Cpolygon points='50,12 82,30 85,64 50,88 15,64 18,30' fill='%23ff9900'/%3E%3Cpolygon points='50,12 50,88 85,64' fill='%23b36200' opacity='0.4'/%3E%3Cpolygon points='50,12 18,30 15,64' fill='%23ffbf00' opacity='0.5'/%3E%3Cpath d='M58,14 L28,50 L48,50 L38,86 L74,42 L52,42 Z' fill='%23ffffff' stroke='%23111111' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M56,17 L32,48 L48,48 L40,81 L70,44 L53,44 Z' fill='%23ffff00'/%3E%3C/svg%3E";
-
-        // 애니메이션 캡처 이미지 속 '大' 자 불꽃 모양 구현 (노란색 외곽선과 주황색 굵은 핵)
-        const fireBlastImg = new Image();
-        fireBlastImg.onload = () => fireBlastLoaded = true;
-        fireBlastImg.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cfilter id='animeFire' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.5' result='blur' /%3E%3CfeMerge%3E%3CfeMergeNode in='blur' /%3E%3CfeMergeNode in='SourceGraphic' /%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23animeFire)'%3E%3Cpath d='M 35,90 Q 95,85 165,85 M 100,25 Q 95,95 40,175 M 105,85 Q 145,130 165,170' stroke='%23ffcc00' stroke-width='42' stroke-linecap='round' stroke-linejoin='round' fill='none' /%3E%3Cpath d='M 35,90 Q 95,85 165,85 M 100,25 Q 95,95 40,175 M 105,85 Q 145,130 165,170' stroke='%23ea5514' stroke-width='24' stroke-linecap='round' stroke-linejoin='round' fill='none' /%3E%3C/g%3E%3C/svg%3E";
 
         const CANVAS_WIDTH = canvas.width;
         const CANVAS_HEIGHT = canvas.height;
@@ -107,12 +191,27 @@
         const BASE_ZAPDOS_SPEED = 456;
 
         let isGameOver = false;
+        let isGameWon = false;
         let isPhase2 = false;
         let charizardTriggered = false;
-        let ash = null;
+        let blastoiseTriggered = false;
+        let alakazamTriggered = false;
+        let pikachuThunderboltTriggered = false;
+
+        let red = null;
         let charizard = null;
+        let blastoise = null;
+        let alakazam = null;
         let fireBlast = null;
+        let hydroPump = null;
+        let isPsychicActive = false;
+        let globalObstacleOpacity = 1.0;
         let fireParticles = [];
+
+        // 백만볼트 전기 효과 상태
+        let isThunderboltActive = false;
+        let thunderboltTimer = 0;
+        let lightningBolts = [];
 
         let startTime = Date.now();
         let survivalTime = 0;
@@ -122,6 +221,10 @@
         let zapdosInterval = null;
         let magikarpInterval = null;
         let thunderStoneInterval = null;
+        let ghostInterval = null;
+
+        let nextMewtwoSpawnTime = 30;
+        let isGhostPhase = false;
 
         const keys = {};
 
@@ -142,6 +245,7 @@
         let magikarps = [];
         let pidgeots = [];
         let zapdoses = [];
+        let ghosts = [];
         let thunderStones = [];
         let auraParticles = [];
 
@@ -151,7 +255,7 @@
             }
             keys[e.key] = true;
 
-            if (isGameOver && (e.key === "r" || e.key === "R")) {
+            if ((isGameOver || isGameWon) && (e.key === "r" || e.key === "R")) {
                 restartGame();
             }
         });
@@ -173,23 +277,27 @@
         }
 
         function spawnSlowpoke() {
+            if (isGhostPhase || isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
             const speed = isPhase2 ? BASE_SLOWPOKE_SPEED * 1.2 : BASE_SLOWPOKE_SPEED;
+            const isSlowking = isPhase2;
+            const sizeMult = isSlowking ? 1.3 : 1.0; 
 
             slowpokes.push({
                 x: spawnX,
                 y: spawnY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 15,
-                drawWidth: 40,
-                drawHeight: 40,
-                type: isPhase2 ? 'slowking' : 'slowpoke'
+                size: 15 * sizeMult,
+                drawWidth: 40 * sizeMult,
+                drawHeight: 40 * sizeMult,
+                type: isSlowking ? 'slowking' : 'slowpoke'
             });
         }
 
         function spawnMagikarp() {
+            if (isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
             const speed = isPhase2 ? BASE_MAGIKARP_SPEED * 1.2 : BASE_MAGIKARP_SPEED;
@@ -207,6 +315,7 @@
         }
 
         function spawnThunderStone() {
+            if (isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
 
@@ -222,36 +331,118 @@
         }
 
         function spawnPidgeot() {
+            if (isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
             const speed = isPhase2 ? BASE_PIDGEOT_SPEED * 1.2 : BASE_PIDGEOT_SPEED;
+
+            let type = 'pidgeot';
+            let size = 18;
+            let dWidth = 55;
+            let dHeight = 55;
+
+            if (isGhostPhase) {
+                type = 'caterpie';
+                size = 18;
+                dWidth = 48;
+                dHeight = 48;
+            } else if (isPhase2) {
+                type = 'gyarados';
+                size = 22;
+                dWidth = 66;
+                dHeight = 66;
+            }
 
             pidgeots.push({
                 x: spawnX,
                 y: spawnY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: isPhase2 ? 22 : 18,
-                drawWidth: isPhase2 ? 66 : 55,
-                drawHeight: isPhase2 ? 66 : 55,
-                type: isPhase2 ? 'gyarados' : 'pidgeot'
+                size: size,
+                drawWidth: dWidth,
+                drawHeight: dHeight,
+                type: type
             });
         }
 
-        function spawnZapdos() {
+        function spawnZapdos(forceMewtwo = false) {
+            if (isThunderboltActive || isGameWon) return;
             const { spawnX, spawnY } = getSpawnPosition();
             const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
-            const speed = isPhase2 ? BASE_ZAPDOS_SPEED * 1.1 : BASE_ZAPDOS_SPEED;
+            
+            let speed = BASE_ZAPDOS_SPEED;
+            let type = 'zapdos';
+            let size = 22;
+            let dWidth = 65;
+            let dHeight = 65;
+
+            if (forceMewtwo) {
+                speed = BASE_ZAPDOS_SPEED * 1.1; 
+                if (isGhostPhase) {
+                    type = 'oak';
+                    size = 66;
+                    dWidth = 195;
+                    dHeight = 195; 
+                } else {
+                    type = 'mewtwo';
+                    size = 44; 
+                    dWidth = 130;
+                    dHeight = 130;
+                }
+            } else if (isGhostPhase) {
+                speed = BASE_ZAPDOS_SPEED * 1.1;
+                type = 'weedle';
+                size = 20;
+                dWidth = 50;
+                dHeight = 50;
+            } else if (isPhase2) { 
+                speed = BASE_ZAPDOS_SPEED * 1.1;
+                type = 'hooh';
+            }
 
             zapdoses.push({
                 x: spawnX,
                 y: spawnY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 22,
-                drawWidth: 65,
-                drawHeight: 65,
-                type: isPhase2 ? 'hooh' : 'zapdos'
+                size: size,
+                drawWidth: dWidth,
+                drawHeight: dHeight,
+                type: type
+            });
+        }
+
+        function spawnGhost() {
+            if (isThunderboltActive || isGameWon) return;
+            const { spawnX, spawnY } = getSpawnPosition();
+            const angle = Math.atan2(pikachu.y - spawnY, pikachu.x - spawnX);
+            const speed = BASE_ZAPDOS_SPEED * 1.1;
+            const r = Math.random();
+            let type = 'gastly';
+            let size = 20;
+            let dWidth = 55;
+            let dHeight = 55;
+
+            if (r < 0.33) {
+                type = 'gastly';
+                size = 20; dWidth = 55; dHeight = 55;
+            } else if (r < 0.66) {
+                type = 'haunter';
+                size = 24; dWidth = 65; dHeight = 65;
+            } else {
+                type = 'gengar';
+                size = 28; dWidth = 75; dHeight = 75;
+            }
+
+            ghosts.push({
+                x: spawnX,
+                y: spawnY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: size,
+                drawWidth: dWidth,
+                drawHeight: dHeight,
+                type: type
             });
         }
 
@@ -260,36 +451,64 @@
             if (zapdosInterval) clearInterval(zapdosInterval);
             if (magikarpInterval) clearInterval(magikarpInterval);
             if (thunderStoneInterval) clearInterval(thunderStoneInterval);
+            if (ghostInterval) clearInterval(ghostInterval);
 
-            pidgeotInterval = setInterval(() => { if (!isGameOver) spawnPidgeot(); }, 7000);
-            thunderStoneInterval = setInterval(() => { if (!isGameOver) spawnThunderStone(); }, 12000);
-            magikarpInterval = setInterval(() => { if (!isGameOver) spawnMagikarp(); }, 15000);
-            zapdosInterval = setInterval(() => { if (!isGameOver) spawnZapdos(); }, 20000);
+            pidgeotInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnPidgeot(); }, 7000);
+            thunderStoneInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnThunderStone(); }, 12000);
+            magikarpInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnMagikarp(); }, 15000);
+            zapdosInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnZapdos(); }, 20000);
         }
 
         function restartGame() {
             isGameOver = false;
+            isGameWon = false;
             isPhase2 = false;
             charizardTriggered = false;
-            ash = null;
+            blastoiseTriggered = false;
+            alakazamTriggered = false;
+            pikachuThunderboltTriggered = false;
+
+            red = null;
             charizard = null;
+            blastoise = null;
+            alakazam = null;
             fireBlast = null;
+            hydroPump = null;
+            isPsychicActive = false;
+            globalObstacleOpacity = 1.0;
             fireParticles = [];
+
+            isThunderboltActive = false;
+            thunderboltTimer = 0;
+            lightningBolts = [];
 
             slowpokes = [];
             magikarps = [];
             pidgeots = [];
             zapdoses = [];
+            ghosts = [];
             thunderStones = [];
             auraParticles = [];
+
+            nextMewtwoSpawnTime = 30;
+            isGhostPhase = false;
+            if (ghostInterval) clearInterval(ghostInterval);
+            ghostInterval = null;
             
             pikachu.x = CANVAS_WIDTH / 2;
             pikachu.y = CANVAS_HEIGHT / 2;
-            pikachu.isInvincible = false;
+            pikachu.isInvincible = isTestInvincible;
             pikachu.invincibleTimer = 0;
             pikachu.speed = pikachu.normalSpeed;
-            invincibleStatusElement.style.display = "none";
-            invincibleStatusElement.style.opacity = "1";
+
+            if (isTestInvincible) {
+                invincibleStatusElement.textContent = "🛡️ 무적 모드 활성화 중!";
+                invincibleStatusElement.style.display = "inline";
+                invincibleStatusElement.style.opacity = "1";
+            } else {
+                invincibleStatusElement.style.display = "none";
+                invincibleStatusElement.style.opacity = "1";
+            }
 
             startTime = Date.now();
             lastTime = performance.now();
@@ -298,7 +517,7 @@
         }
 
         function update(currentTime) {
-            if (isGameOver) return;
+            if (isGameOver || isGameWon) return;
 
             if (!lastTime) lastTime = currentTime;
             let dt = (currentTime - lastTime) / 1000;
@@ -306,99 +525,333 @@
 
             if (isNaN(dt) || dt > 0.1) dt = 0.016;
 
-            survivalTime = Math.floor((Date.now() - startTime) / 1000);
-            scoreElement.textContent = survivalTime;
+            if (!isThunderboltActive && !isGameWon) {
+                survivalTime = Math.floor((Date.now() - startTime) / 1000);
+                scoreElement.textContent = survivalTime;
+            }
 
-            // 22초에 지우 등장 이벤트 발생
-            if (survivalTime >= 22 && !charizardTriggered) {
+            // 70초 피날레: 레드가 단독 등장하여 "피카츄, 백만볼트!" 외침
+            if (survivalTime >= 70 && !pikachuThunderboltTriggered) {
+                pikachuThunderboltTriggered = true;
+
+                red = {
+                    x: CANVAS_WIDTH + 100,
+                    y: CANVAS_HEIGHT / 2 + 75,
+                    targetX: CANVAS_WIDTH - 70, 
+                    drawWidth: 150, 
+                    drawHeight: 150, 
+                    state: 'entering_p',
+                    timer: 0,
+                    text: "피카츄, 백만볼트!"
+                };
+            }
+            // 30초 최초 등장 후 10초마다 거대 뮤츠 / 거대 오키드 박사 난입
+            else if (survivalTime >= nextMewtwoSpawnTime && survivalTime < 70) {
+                spawnZapdos(true);
+                nextMewtwoSpawnTime += 10;
+            }
+
+            // 50초 거대 후딘 사이코키네시스 이벤트
+            if (survivalTime >= 50 && !alakazamTriggered && survivalTime < 70) {
+                alakazamTriggered = true;
+                
+                red = {
+                    x: CANVAS_WIDTH + 100,
+                    y: CANVAS_HEIGHT / 2 + 75,
+                    targetX: CANVAS_WIDTH - 70, 
+                    drawWidth: 150, 
+                    drawHeight: 150, 
+                    state: 'entering_a',
+                    timer: 0,
+                    text: "후딘, 사이코키네시스!"
+                };
+            }
+            // 35초 거북왕 하이드로펌프 이벤트
+            else if (survivalTime >= 35 && !blastoiseTriggered && survivalTime < 50) {
+                blastoiseTriggered = true;
+                
+                red = {
+                    x: CANVAS_WIDTH + 100,
+                    y: CANVAS_HEIGHT / 2 + 75,
+                    targetX: CANVAS_WIDTH - 70, 
+                    drawWidth: 150, 
+                    drawHeight: 150, 
+                    state: 'entering_b',
+                    timer: 0,
+                    text: "거북왕, 하이드로펌프!"
+                };
+            }
+            // 18초 리자몽 불대문자 이벤트
+            else if (survivalTime >= 18 && !charizardTriggered && survivalTime < 35) {
                 charizardTriggered = true;
                 isPhase2 = true;
 
-                ash = {
-                    x: CANVAS_WIDTH + 120,
+                red = {
+                    x: CANVAS_WIDTH + 100,
                     y: CANVAS_HEIGHT / 2 + 75,
-                    targetX: CANVAS_WIDTH - 100, // 크기가 커진 만큼 자연스럽게 보이도록 위치 조정
-                    drawWidth: 180, // 기존 90에서 2배로 크기 확대
-                    drawHeight: 180, // 기존 90에서 2배로 크기 확대
+                    targetX: CANVAS_WIDTH - 70, 
+                    drawWidth: 150, 
+                    drawHeight: 150, 
                     state: 'entering',
-                    timer: 0
+                    timer: 0,
+                    text: "리자몽, 불대문자!"
                 };
             }
 
-            if (ash) {
-                if (ash.state === 'entering') {
-                    ash.x -= 300 * dt;
-                    if (ash.x <= ash.targetX) {
-                        ash.x = ash.targetX;
-                        ash.state = 'shouting';
+            // 레드 컨트롤 로직
+            if (red) {
+                if (red.state.startsWith('entering')) {
+                    red.x -= 300 * dt;
+                    if (red.x <= red.targetX) {
+                        red.x = red.targetX;
+                        red.state = red.state.replace('entering', 'shouting');
                     }
-                } else if (ash.state === 'shouting') {
-                    ash.timer += dt;
-                    // 지우가 1.5초간 외친 후 리자몽 등장
-                    if (ash.timer > 1.5 && !charizard) {
-                        charizard = {
-                            x: CANVAS_WIDTH + 150,
-                            y: CANVAS_HEIGHT / 2 - 35,
-                            targetX: CANVAS_WIDTH - 120,
-                            drawWidth: 170,
-                            drawHeight: 170,
-                            state: 'entering'
-                        };
+                } else if (red.state.startsWith('shouting')) {
+                    red.timer += dt;
+                    if (red.state === 'shouting_p') {
+                        // 70초 백만볼트: 레드가 대사를 외치고 0.8초 후 전격 발동
+                        if (red.timer > 0.8 && !isThunderboltActive) {
+                            isThunderboltActive = true;
+                            thunderboltTimer = 0;
+                            // 모든 적 즉시 제거 및 스폰 타이머 정지
+                            slowpokes = [];
+                            magikarps = [];
+                            pidgeots = [];
+                            zapdoses = [];
+                            ghosts = [];
+                            thunderStones = [];
+                            if (ghostInterval) clearInterval(ghostInterval);
+                        }
+                    } else if (red.timer > 1.2) {
+                        if (red.state === 'shouting' && !charizard) {
+                            charizard = {
+                                x: CANVAS_WIDTH + 260,
+                                y: CANVAS_HEIGHT / 2 - 40,
+                                targetX: CANVAS_WIDTH - 150,
+                                drawWidth: 340, 
+                                drawHeight: 340, 
+                                state: 'entering'
+                            };
+                        } else if (red.state === 'shouting_b' && !blastoise) {
+                            blastoise = {
+                                x: CANVAS_WIDTH + 260,
+                                y: CANVAS_HEIGHT / 2 - 40,
+                                targetX: CANVAS_WIDTH - 150,
+                                drawWidth: 340, 
+                                drawHeight: 340, 
+                                state: 'entering'
+                            };
+                        } else if (red.state === 'shouting_a' && !alakazam) {
+                            alakazam = {
+                                x: CANVAS_WIDTH + 260,
+                                y: CANVAS_HEIGHT / 2 - 40,
+                                targetX: CANVAS_WIDTH - 150,
+                                drawWidth: 340, 
+                                drawHeight: 340, 
+                                state: 'entering'
+                            };
+                        }
                     }
-                } else if (ash.state === 'leaving') {
-                    ash.x += 350 * dt;
-                    if (ash.x > CANVAS_WIDTH + 120) ash = null;
+                } else if (red.state === 'leaving') {
+                    red.x += 350 * dt;
+                    if (red.x > CANVAS_WIDTH + 140) red = null;
                 }
             }
 
+            // 백만볼트 전격 효과: 정확히 2초간 지속된 후 생존완료 엔딩으로 전환
+            if (isThunderboltActive) {
+                thunderboltTimer += dt;
+
+                // 화면 전체 지그재그 번개 생성
+                lightningBolts = [];
+                for (let i = 0; i < 7; i++) {
+                    const startX = pikachu.x + (Math.random() - 0.5) * 30;
+                    const startY = pikachu.y + (Math.random() - 0.5) * 30;
+                    const endX = Math.random() * CANVAS_WIDTH;
+                    const endY = Math.random() * CANVAS_HEIGHT;
+                    lightningBolts.push({ startX, startY, endX, endY });
+                }
+
+                // 전기 스파크 파티클
+                for (let i = 0; i < 8; i++) {
+                    fireParticles.push({
+                        x: Math.random() * CANVAS_WIDTH,
+                        y: Math.random() * CANVAS_HEIGHT,
+                        vx: (Math.random() - 0.5) * 200,
+                        vy: (Math.random() - 0.5) * 200,
+                        size: Math.random() * 8 + 4,
+                        life: 0.5,
+                        decay: 2.2,
+                        colorType: Math.random() > 0.3 ? '#ffff00' : '#ffffff'
+                    });
+                }
+
+                // 2초 지속 완료 후 전격 종료 및 생존완료 화면 표시
+                if (thunderboltTimer >= 2.0) {
+                    isThunderboltActive = false;
+                    lightningBolts = [];
+                    isGameWon = true;
+                    if (red) red.state = 'leaving';
+                }
+            }
+
+            // 리자몽 & 불대문자 처리
             if (charizard) {
                 if (charizard.state === 'entering') {
-                    charizard.x -= 350 * dt;
+                    charizard.x -= 380 * dt;
                     if (charizard.x <= charizard.targetX) {
                         charizard.x = charizard.targetX;
                         charizard.state = 'firing';
                         fireBlast = {
-                            x: charizard.x - 60,
+                            x: charizard.x - 150,
                             y: CANVAS_HEIGHT / 2,
-                            vx: -600,
-                            drawWidth: 280,
-                            drawHeight: 280
+                            vx: -580,
+                            drawWidth: 540,
+                            drawHeight: 540
                         };
                     }
                 } else if (charizard.state === 'firing') {
                     if (!fireBlast) {
                         charizard.state = 'leaving';
-                        if (ash) ash.state = 'leaving'; // 불대문자가 화면에서 사라지면 지우와 리자몽 동시 퇴장
+                        if (red) red.state = 'leaving';
                     }
                 } else if (charizard.state === 'leaving') {
-                    charizard.x += 350 * dt;
-                    if (charizard.x > CANVAS_WIDTH + 180) charizard = null;
+                    charizard.x += 400 * dt;
+                    if (charizard.x > CANVAS_WIDTH + 360) charizard = null;
                 }
             }
 
             if (fireBlast) {
                 fireBlast.x += fireBlast.vx * dt;
 
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < 8; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 120 + 40;
                     fireParticles.push({
-                        x: fireBlast.x + (Math.random() - 0.5) * 100,
-                        y: fireBlast.y + (Math.random() - 0.5) * 200,
-                        vx: Math.random() * 150 + 50,
-                        vy: (Math.random() - 0.5) * 100,
-                        size: Math.random() * 8 + 4,
+                        x: fireBlast.x + (Math.random() - 0.5) * 250,
+                        y: fireBlast.y + (Math.random() - 0.5) * 250,
+                        vx: Math.cos(angle) * speed + fireBlast.vx * 0.2,
+                        vy: Math.sin(angle) * speed - Math.random() * 60,
+                        size: Math.random() * 16 + 8,
                         life: 1.0,
-                        decay: Math.random() * 3 + 2
+                        decay: Math.random() * 2.5 + 1.5,
+                        colorType: Math.random() > 0.4 ? '#ff3300' : (Math.random() > 0.5 ? '#ff9900' : '#ffff44')
                     });
                 }
 
-                const isSwept = (obj) => Math.abs(obj.y - fireBlast.y) < 160 && obj.x > fireBlast.x - 130;
+                const isSwept = (obj) => Math.abs(obj.y - fireBlast.y) < 250 && obj.x > fireBlast.x - 250;
                 slowpokes = slowpokes.filter(s => !isSwept(s));
                 magikarps = magikarps.filter(m => !isSwept(m));
                 pidgeots = pidgeots.filter(p => !isSwept(p));
                 zapdoses = zapdoses.filter(z => !isSwept(z));
 
-                if (fireBlast.x < -300) {
+                if (fireBlast.x < -360) {
                     fireBlast = null;
+                }
+            }
+
+            // 거북왕 & 하이드로펌프 처리
+            if (blastoise) {
+                if (blastoise.state === 'entering') {
+                    blastoise.x -= 380 * dt;
+                    if (blastoise.x <= blastoise.targetX) {
+                        blastoise.x = blastoise.targetX;
+                        blastoise.state = 'firing';
+                        hydroPump = {
+                            x: blastoise.x - 150,
+                            y: CANVAS_HEIGHT / 2,
+                            vx: -700,
+                            drawWidth: CANVAS_WIDTH * 1.5,
+                            drawHeight: CANVAS_HEIGHT
+                        };
+                    }
+                } else if (blastoise.state === 'firing') {
+                    if (!hydroPump) {
+                        blastoise.state = 'leaving';
+                        if (red) red.state = 'leaving';
+                    }
+                } else if (blastoise.state === 'leaving') {
+                    blastoise.x += 400 * dt;
+                    if (blastoise.x > CANVAS_WIDTH + 360) blastoise = null;
+                }
+            }
+
+            if (hydroPump) {
+                hydroPump.x += hydroPump.vx * dt;
+
+                for (let i = 0; i < 15; i++) {
+                    fireParticles.push({
+                        x: hydroPump.x + Math.random() * hydroPump.drawWidth,
+                        y: hydroPump.y + (Math.random() - 0.5) * hydroPump.drawHeight,
+                        vx: hydroPump.vx * 0.6 + (Math.random() - 0.5) * 150,
+                        vy: (Math.random() - 0.5) * 150,
+                        size: Math.random() * 20 + 10,
+                        life: 1.0,
+                        decay: Math.random() * 3 + 1.5,
+                        colorType: Math.random() > 0.6 ? '#e1f5fe' : (Math.random() > 0.3 ? '#4fc3f7' : '#0288d1')
+                    });
+                }
+
+                const isSwept = (obj) => obj.x > hydroPump.x;
+                slowpokes = slowpokes.filter(s => !isSwept(s));
+                magikarps = magikarps.filter(m => !isSwept(m));
+                pidgeots = pidgeots.filter(p => !isSwept(p));
+                zapdoses = zapdoses.filter(z => !isSwept(z));
+
+                if (hydroPump.x + hydroPump.drawWidth < -200) {
+                    hydroPump = null;
+                }
+            }
+
+            // 후딘 & 사이코키네시스 처리
+            if (alakazam) {
+                if (alakazam.state === 'entering') {
+                    alakazam.x -= 380 * dt;
+                    if (alakazam.x <= alakazam.targetX) {
+                        alakazam.x = alakazam.targetX;
+                        alakazam.state = 'firing';
+                        isPsychicActive = true;
+                    }
+                } else if (alakazam.state === 'firing') {
+                    if (!isPsychicActive) {
+                        alakazam.state = 'leaving';
+                        if (red) red.state = 'leaving';
+                    }
+                } else if (alakazam.state === 'leaving') {
+                    alakazam.x += 400 * dt;
+                    if (alakazam.x > CANVAS_WIDTH + 360) alakazam = null;
+                }
+            }
+
+            if (isPsychicActive) {
+                globalObstacleOpacity -= dt * 1.0;
+                
+                for (let i = 0; i < 3; i++) {
+                    fireParticles.push({
+                        x: Math.random() * CANVAS_WIDTH,
+                        y: Math.random() * CANVAS_HEIGHT,
+                        vx: (Math.random() - 0.5) * 100,
+                        vy: -Math.random() * 100 - 50,
+                        size: Math.random() * 10 + 5,
+                        life: 1.0,
+                        decay: 2.0,
+                        colorType: 'rgba(186, 85, 211, 0.8)'
+                    });
+                }
+
+                if (globalObstacleOpacity <= 0) {
+                    globalObstacleOpacity = 1.0;
+                    slowpokes = [];
+                    magikarps = [];
+                    pidgeots = [];
+                    zapdoses = [];
+                    
+                    isPsychicActive = false;
+                    
+                    if (!isGhostPhase) {
+                        isGhostPhase = true;
+                        ghostInterval = setInterval(() => { if (!isGameOver && !isGameWon) spawnGhost(); }, 500);
+                    }
                 }
             }
 
@@ -406,11 +859,13 @@
                 const fp = fireParticles[i];
                 fp.x += fp.vx * dt;
                 fp.y += fp.vy * dt;
+                fp.size += dt * 15;
                 fp.life -= fp.decay * dt;
                 if (fp.life <= 0) fireParticles.splice(i, 1);
             }
 
-            if (pikachu.isInvincible) {
+            // 무적 타이머
+            if (pikachu.isInvincible && !isTestTestActive()) {
                 pikachu.invincibleTimer -= dt;
 
                 if (pikachu.invincibleTimer <= 1.5) {
@@ -428,9 +883,14 @@
                 }
             }
 
-            const targetSlowpokeCount = Math.min(20, survivalTime);
-            while (slowpokes.length < targetSlowpokeCount) {
-                spawnSlowpoke();
+            // 장애물 점진적 스폰
+            if (!isGhostPhase && !isThunderboltActive && !isGameWon) {
+                const targetSlowpokeCount = Math.min(25, 5 + Math.floor(survivalTime / 1.5));
+                if (slowpokes.length < targetSlowpokeCount) {
+                    if (Math.random() < 0.05) {
+                        spawnSlowpoke();
+                    }
+                }
             }
 
             let dx = 0;
@@ -467,13 +927,17 @@
                     pikachu.isInvincible = true;
                     pikachu.invincibleTimer = 4.0;
                     pikachu.speed = pikachu.boostedSpeed;
+                    if (!isTestInvincible) {
+                        invincibleStatusElement.textContent = "⚡ 라이츄 진화 (무적)! ⚡";
+                    }
                     invincibleStatusElement.style.display = "inline";
                     invincibleStatusElement.style.opacity = "1";
                 }
             }
 
             const checkCollision = (target) => {
-                if (pikachu.isInvincible) return false;
+                if (pikachu.isInvincible || isTestInvincible) return false;
+                if (isPsychicActive || isThunderboltActive || isGameWon) return false;
                 return Math.hypot(pikachu.x - target.x, pikachu.y - target.y) < pikachu.size + target.size;
             };
 
@@ -505,14 +969,28 @@
                 const z = zapdoses[i];
                 z.x += z.vx * dt;
                 z.y += z.vy * dt;
-                if (z.x < -100 || z.x > CANVAS_WIDTH + 100 || z.y < -100 || z.y > CANVAS_HEIGHT + 100) { zapdoses.splice(i, 1); continue; }
+                if (z.x < -250 || z.x > CANVAS_WIDTH + 250 || z.y < -250 || z.y > CANVAS_HEIGHT + 250) { 
+                    zapdoses.splice(i, 1); 
+                    continue; 
+                }
                 if (checkCollision(z)) isGameOver = true;
             }
+
+            for (let i = ghosts.length - 1; i >= 0; i--) {
+                const g = ghosts[i];
+                g.x += g.vx * dt;
+                g.y += g.vy * dt;
+                if (g.x < -100 || g.x > CANVAS_WIDTH + 100 || g.y < -100 || g.y > CANVAS_HEIGHT + 100) { ghosts.splice(i, 1); continue; }
+                if (checkCollision(g)) isGameOver = true;
+            }
+        }
+
+        function isTestTestActive() {
+            return isTestInvincible;
         }
 
         function drawSuperSaiyanAura(x, y) {
             const time = performance.now() * 0.008;
-
             ctx.save();
             ctx.globalCompositeOperation = "lighter";
 
@@ -548,7 +1026,6 @@
                 ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
                 ctx.fill();
             }
-
             ctx.restore();
         }
 
@@ -557,7 +1034,6 @@
             const numPoints = 12;
             for (let i = 0; i < numPoints; i++) {
                 const angle = (i / numPoints) * Math.PI * 2;
-
                 let currRx = rx;
                 let currRy = ry;
                 const upFactor = Math.sin(angle);
@@ -580,14 +1056,117 @@
             ctx.stroke();
         }
 
+        function drawBlazingFireBlast(x, y, width, height) {
+            const time = performance.now() * 0.012;
+            ctx.save();
+            ctx.translate(x, y);
+
+            const scalePulse = 1 + Math.sin(time * 3) * 0.05;
+            ctx.scale(scalePulse, scalePulse);
+
+            ctx.shadowBlur = 35 + Math.sin(time * 6) * 15;
+            ctx.shadowColor = "#ff2200";
+
+            const drawDaiPath = (offset, jitterAmt) => {
+                ctx.beginPath();
+                const j1 = Math.sin(time * 5 + offset) * jitterAmt;
+                const j2 = Math.cos(time * 6 + offset) * jitterAmt;
+                const j3 = Math.sin(time * 7 + offset) * jitterAmt;
+
+                ctx.moveTo(-width * 0.42 + j1, -height * 0.05 + j2);
+                ctx.quadraticCurveTo(0, -height * 0.08 + j3, width * 0.42 + j2, -height * 0.05 + j1);
+                ctx.moveTo(0 + j3, -height * 0.42 + j1);
+                ctx.quadraticCurveTo(-width * 0.05 + j2, 0, -width * 0.38 + j1, height * 0.42 + j3);
+                ctx.moveTo(0 + j1, 0 + j2);
+                ctx.quadraticCurveTo(width * 0.2 + j3, height * 0.2, width * 0.38 + j2, height * 0.42 + j1);
+            };
+
+            ctx.lineWidth = 48 + Math.sin(time * 4) * 6;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = "#d61800";
+            drawDaiPath(0, 7);
+            ctx.stroke();
+
+            ctx.lineWidth = 34 + Math.cos(time * 5) * 4;
+            ctx.strokeStyle = "#ff6a00";
+            drawDaiPath(1.5, 4);
+            ctx.stroke();
+
+            ctx.lineWidth = 20 + Math.sin(time * 8) * 3;
+            ctx.strokeStyle = "#ffea00";
+            drawDaiPath(3.0, 2);
+            ctx.stroke();
+
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = "#ffffff";
+            drawDaiPath(4.5, 1);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawHydroPump(x, y, width, height) {
+            const time = performance.now() * 0.015;
+            ctx.save();
+            ctx.translate(x, y);
+
+            const waveHeight = height * 0.8 + Math.sin(time) * (height * 0.2);
+            
+            const gradient = ctx.createLinearGradient(0, -waveHeight/2, 0, waveHeight/2);
+            gradient.addColorStop(0, "rgba(225, 245, 254, 0.0)");
+            gradient.addColorStop(0.15, "rgba(79, 195, 247, 0.9)");
+            gradient.addColorStop(0.5, "rgba(255, 255, 255, 1.0)");
+            gradient.addColorStop(0.85, "rgba(2, 136, 209, 0.9)");
+            gradient.addColorStop(1, "rgba(1, 87, 155, 0.0)");
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, -waveHeight / 2, width, waveHeight);
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.fillRect(0, -waveHeight * 0.15, width, waveHeight * 0.3);
+
+            ctx.restore();
+        }
+
+        function drawLightningBolt(x1, y1, x2, y2) {
+            ctx.save();
+            ctx.strokeStyle = "#ffff55";
+            ctx.lineWidth = 3;
+            ctx.shadowColor = "#ffee00";
+            ctx.shadowBlur = 15;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+
+            const segments = 6;
+            let currentX = x1;
+            let currentY = y1;
+
+            for (let i = 1; i < segments; i++) {
+                const targetX = x1 + (x2 - x1) * (i / segments);
+                const targetY = y1 + (y2 - y1) * (i / segments);
+                currentX = targetX + (Math.random() - 0.5) * 50;
+                currentY = targetY + (Math.random() - 0.5) * 50;
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+
         function drawSpeechBubble(x, y, text) {
             ctx.save();
-            ctx.font = "bold 14px Arial, sans-serif";
+            ctx.font = "bold 15px Arial, sans-serif";
             const textWidth = ctx.measureText(text).width;
-            const bubbleWidth = textWidth + 20;
-            const bubbleHeight = 34;
+            const bubbleWidth = textWidth + 24;
+            const bubbleHeight = 36;
             const bx = x - bubbleWidth / 2;
-            const by = y - 62;
+            const by = y - 70;
 
             ctx.fillStyle = "#ffffff";
             ctx.strokeStyle = "#000000";
@@ -601,7 +1180,7 @@
             ctx.beginPath();
             ctx.moveTo(x - 6, by + bubbleHeight);
             ctx.lineTo(x + 6, by + bubbleHeight);
-            ctx.lineTo(x, by + bubbleHeight + 8);
+            ctx.lineTo(x, by + bubbleHeight + 9);
             ctx.closePath();
             ctx.fillStyle = "#ffffff";
             ctx.fill();
@@ -618,29 +1197,44 @@
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            if (pikachu.isInvincible) {
-                const shouldDrawAura = pikachu.invincibleTimer > 1.5 || (Math.floor(pikachu.invincibleTimer * 12) % 2 === 0);
+            ctx.imageSmoothingEnabled = false;
+
+            // 백만볼트 전격 번쩍임 배경
+            if (isThunderboltActive && Math.random() > 0.35) {
+                ctx.fillStyle = "rgba(255, 255, 180, 0.18)";
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            }
+
+            if (pikachu.isInvincible || isTestInvincible) {
+                const shouldDrawAura = isTestInvincible || pikachu.invincibleTimer > 1.5 || (Math.floor(pikachu.invincibleTimer * 12) % 2 === 0);
                 if (shouldDrawAura) {
                     drawSuperSaiyanAura(pikachu.x, pikachu.y);
                 }
             }
 
-            const activePlayerImg = pikachu.isInvincible ? (raichuLoaded ? raichuImg : pikachuImg) : (pikachuLoaded ? pikachuImg : null);
+            const isCurrentRaichu = pikachu.isInvincible || isTestInvincible;
+            const activePlayerImg = isCurrentRaichu ? (raichuLoaded ? raichuImg : pikachuImg) : (pikachuLoaded ? pikachuImg : null);
             if (activePlayerImg) {
-                const w = pikachu.isInvincible ? 50 : pikachu.drawWidth;
-                const h = pikachu.isInvincible ? 50 : pikachu.drawHeight;
+                const w = isCurrentRaichu ? 50 : pikachu.drawWidth;
+                const h = isCurrentRaichu ? 50 : pikachu.drawHeight;
                 ctx.drawImage(activePlayerImg, pikachu.x - w / 2, pikachu.y - h / 2, w, h);
             } else {
+                ctx.fillStyle = "#ffffff";
                 ctx.font = "28px sans-serif";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText(pikachu.isInvincible ? "⚡🐭" : "⚡", pikachu.x, pikachu.y);
+                ctx.fillText(isCurrentRaichu ? "⚡🐭" : "⚡", pikachu.x, pikachu.y);
             }
+
+            // 장애물 레이어 그리기
+            ctx.save();
+            ctx.globalAlpha = globalObstacleOpacity;
 
             thunderStones.forEach(ts => {
                 if (thunderStoneLoaded) {
                     ctx.drawImage(thunderStoneImg, ts.x - ts.drawWidth / 2, ts.y - ts.drawHeight / 2, ts.drawWidth, ts.drawHeight);
                 } else {
+                    ctx.fillStyle = "#ffffff";
                     ctx.font = "22px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
@@ -653,6 +1247,7 @@
                 if (img) {
                     ctx.drawImage(img, s.x - s.drawWidth / 2, s.y - s.drawHeight / 2, s.drawWidth, s.drawHeight);
                 } else {
+                    ctx.fillStyle = "#ffffff";
                     ctx.font = "22px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
@@ -665,6 +1260,7 @@
                 if (img) {
                     ctx.drawImage(img, m.x - m.drawWidth / 2, m.y - m.drawHeight / 2, m.drawWidth, m.drawHeight);
                 } else {
+                    ctx.fillStyle = "#ffffff";
                     ctx.font = "22px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
@@ -673,80 +1269,171 @@
             });
 
             pidgeots.forEach(p => {
-                const img = p.type === 'gyarados' ? (gyaradosLoaded ? gyaradosImg : null) : (pidgeotLoaded ? pidgeotImg : null);
+                let img = null;
+                let emoji = "🦅";
+                if (p.type === 'caterpie') {
+                    img = caterpieLoaded ? caterpieImg : null;
+                    emoji = "🐛";
+                } else if (p.type === 'gyarados') {
+                    img = gyaradosLoaded ? gyaradosImg : null;
+                    emoji = "🐉";
+                } else {
+                    img = pidgeotLoaded ? pidgeotImg : null;
+                }
+
                 if (img) {
                     ctx.drawImage(img, p.x - p.drawWidth / 2, p.y - p.drawHeight / 2, p.drawWidth, p.drawHeight);
                 } else {
+                    ctx.fillStyle = "#ffffff";
                     ctx.font = "28px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(p.type === 'gyarados' ? "🐉" : "🦅", p.x, p.y);
+                    ctx.fillText(emoji, p.x, p.y);
                 }
             });
 
             zapdoses.forEach(z => {
-                const img = z.type === 'hooh' ? (hoohLoaded ? hoohImg : null) : (zapdosLoaded ? zapdosImg : null);
+                let img = null;
+                let emoji = "⚡🦅";
+                
+                if (z.type === 'mewtwo') {
+                    img = mewtwoLoaded ? mewtwoImg : null;
+                    emoji = "🧬🐱";
+                } else if (z.type === 'oak') {
+                    img = oakLoaded ? oakImg : null;
+                    emoji = "👴🏻🔬";
+                } else if (z.type === 'weedle') {
+                    img = weedleLoaded ? weedleImg : null;
+                    emoji = "🐛⚡";
+                } else if (z.type === 'hooh') {
+                    img = hoohLoaded ? hoohImg : null;
+                    emoji = "🌈🦅";
+                } else {
+                    img = zapdosLoaded ? zapdosImg : null;
+                }
+
                 if (img) {
                     ctx.drawImage(img, z.x - z.drawWidth / 2, z.y - z.drawHeight / 2, z.drawWidth, z.drawHeight);
                 } else {
+                    ctx.fillStyle = "#ffffff";
+                    let fontSize = "32px";
+                    if (z.type === 'oak') fontSize = "96px";
+                    else if (z.type === 'mewtwo') fontSize = "64px";
+                    
+                    ctx.font = fontSize + " sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(emoji, z.x, z.y);
+                }
+            });
+            
+            ctx.restore();
+
+            // 유령 렌더링
+            ghosts.forEach(g => {
+                let img = null;
+                let emoji = "👻";
+                if (g.type === 'gastly') img = gastlyLoaded ? gastlyImg : null;
+                else if (g.type === 'haunter') img = haunterLoaded ? haunterImg : null;
+                else if (g.type === 'gengar') img = gengarLoaded ? gengarImg : null;
+
+                if (img) {
+                    ctx.drawImage(img, g.x - g.drawWidth / 2, g.y - g.drawHeight / 2, g.drawWidth, g.drawHeight);
+                } else {
+                    ctx.fillStyle = "#ffffff";
                     ctx.font = "32px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(z.type === 'hooh' ? "🌈🦅" : "⚡🦅", z.x, z.y);
+                    ctx.fillText(emoji, g.x, g.y);
                 }
             });
 
-            // 불대문자 렌더링
-            if (fireBlast) {
-                ctx.save();
-                fireParticles.forEach(fp => {
-                    ctx.fillStyle = `rgba(255, ${Math.floor(fp.life * 200)}, 0, ${fp.life})`;
-                    ctx.beginPath();
-                    ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
-                    ctx.fill();
-                });
+            // 파티클 렌더링
+            ctx.save();
+            ctx.globalCompositeOperation = "lighter";
+            fireParticles.forEach(fp => {
+                ctx.fillStyle = fp.colorType;
+                ctx.globalAlpha = Math.max(0, fp.life);
+                ctx.beginPath();
+                ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.restore();
 
-                if (fireBlastLoaded) {
-                    ctx.drawImage(
-                        fireBlastImg,
-                        fireBlast.x - fireBlast.drawWidth / 2,
-                        fireBlast.y - fireBlast.drawHeight / 2,
-                        fireBlast.drawWidth,
-                        fireBlast.drawHeight
-                    );
-                }
-                ctx.restore();
+            // 백만볼트 번개 줄기
+            if (isThunderboltActive) {
+                lightningBolts.forEach(bolt => {
+                    drawLightningBolt(bolt.startX, bolt.startY, bolt.endX, bolt.endY);
+                });
             }
 
-            // 지우 렌더링 및 등장 이후 쭉 말풍선 띄우기
-            if (ash) {
-                if (ashLoaded) {
-                    ctx.drawImage(ashImg, ash.x - ash.drawWidth / 2, ash.y - ash.drawHeight / 2, ash.drawWidth, ash.drawHeight);
+            // 불대문자
+            if (fireBlast) {
+                drawBlazingFireBlast(fireBlast.x, fireBlast.y, fireBlast.drawWidth, fireBlast.drawHeight);
+            }
+
+            // 하이드로펌프
+            if (hydroPump) {
+                drawHydroPump(hydroPump.x, hydroPump.y, hydroPump.drawWidth, hydroPump.drawHeight);
+            }
+
+            // 거북왕
+            if (blastoise) {
+                if (blastoiseLoaded) {
+                    ctx.drawImage(blastoiseImg, blastoise.x - blastoise.drawWidth / 2, blastoise.y - blastoise.drawHeight / 2, blastoise.drawWidth, blastoise.drawHeight);
                 } else {
-                    // 이미지가 로드되지 않았을 때를 대비한 예비 출력
-                    ctx.font = "40px sans-serif";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "120px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText("👦🏻🧢", ash.x, ash.y);
-                }
-                
-                if (ash.state !== 'entering') {
-                    drawSpeechBubble(ash.x, ash.y - ash.drawHeight / 2, "리자몽, 불대문자!");
+                    ctx.fillText("🐢💧", blastoise.x, blastoise.y);
                 }
             }
 
+            // 후딘
+            if (alakazam) {
+                if (alakazamLoaded) {
+                    ctx.drawImage(alakazamImg, alakazam.x - alakazam.drawWidth / 2, alakazam.y - alakazam.drawHeight / 2, alakazam.drawWidth, alakazam.drawHeight);
+                } else {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "120px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("🥄🥄", alakazam.x, alakazam.y);
+                }
+            }
+
+            // 리자몽
             if (charizard) {
                 if (charizardLoaded) {
                     ctx.drawImage(charizardImg, charizard.x - charizard.drawWidth / 2, charizard.y - charizard.drawHeight / 2, charizard.drawWidth, charizard.drawHeight);
                 } else {
-                    // 이미지가 로드되지 않았을 때를 대비한 예비 출력
-                    ctx.font = "60px sans-serif";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "120px sans-serif";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
                     ctx.fillText("🐲🔥", charizard.x, charizard.y);
                 }
             }
 
+            // 레드
+            if (red) {
+                if (redLoaded) {
+                    ctx.drawImage(redImg, red.x - red.drawWidth / 2, red.y - red.drawHeight / 2, red.drawWidth, red.drawHeight);
+                } else {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "60px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("👦🏻🧢", red.x, red.y);
+                }
+                
+                if (red.state !== 'entering' && red.state !== 'entering_b' && red.state !== 'entering_a' && red.state !== 'entering_p') {
+                    drawSpeechBubble(red.x, red.y - red.drawHeight / 2, red.text);
+                }
+            }
+
+            // GAME OVER 화면
             if (isGameOver) {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -762,13 +1449,42 @@
                 ctx.fillText(`기록: ${survivalTime}초`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
                 ctx.fillText("'R' 키를 눌러 다시 시작하세요", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 50);
             }
+
+            // ★ 70초 전격 이펙트 2초 종료 후 뜨는 '생존완료' 클리어 화면
+            if (isGameWon) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                ctx.fillStyle = "#FFDD00";
+                ctx.shadowColor = "#FFAA00";
+                ctx.shadowBlur = 20;
+                ctx.font = "bold 40px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("⚡ 생존완료 ⚡", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#FFFFFF";
+                ctx.font = "bold 20px sans-serif";
+                ctx.fillText("모든 시련을 극복하고 완벽하게 생존했습니다!", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+
+                ctx.fillStyle = "#A8FFB2";
+                ctx.font = "17px sans-serif";
+                ctx.fillText(`최종 기록: ${survivalTime}초 (클리어)`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 45);
+
+                ctx.fillStyle = "#DDDDDD";
+                ctx.font = "15px sans-serif";
+                ctx.fillText("'R' 키를 눌러 처음부터 다시 도전하세요", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 80);
+            }
         }
 
         function gameLoop(time) {
             update(time);
             draw();
-            if (!isGameOver) {
+            if (!isGameOver && !isGameWon) {
                 requestAnimationFrame(gameLoop);
+            } else if (isGameWon) {
+                draw(); // 생존완료 화면 확정 렌더링
             }
         }
 
