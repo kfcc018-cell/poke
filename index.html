@@ -68,7 +68,7 @@
 
     <div class="header-container">
         <div class="info">
-            <span>버틴 시간: <strong id="score">0</strong>초</span>
+            <span>생존 시간: <strong id="score">0</strong>초</span>
             <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
         </div>
         <button id="testBtn" class="test-btn">쫄?</button>
@@ -891,7 +891,7 @@
                 pikachu.invincibleTimer -= dt;
 
                 if (pikachu.invincibleTimer <= 1.5) {
-                    const isFlickerVisible = Math.floor(pikachu.invincibleTimer * 12) % 2 === 0;
+                    const isFlickerVisible = Math.floor(pikachu.invincibleTimer * 8) % 2 === 0;
                     invincibleStatusElement.style.opacity = isFlickerVisible ? "1" : "0.2";
                 } else {
                     invincibleStatusElement.style.opacity = "1";
