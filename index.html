@@ -71,7 +71,7 @@
             <span>버틴 시간: <strong id="score">0</strong>초</span>
             <span id="invincibleStatus" class="invincible-text" style="display: none;">⚡ 라이츄 진화 (무적)! ⚡</span>
         </div>
-        <button id="testBtn" class="test-btn">자신없으면클릭</button>
+        <button id="testBtn" class="test-btn">쫄?</button>
     </div>
 
     <canvas id="gameCanvas" width="600" height="400"></canvas>
@@ -197,6 +197,7 @@
         let blastoiseTriggered = false;
         let alakazamTriggered = false;
         let pikachuThunderboltTriggered = false;
+        let redThunderTriggered = false; // FLAG added to prevent multiple triggers
 
         let red = null;
         let charizard = null;
@@ -467,6 +468,7 @@
             blastoiseTriggered = false;
             alakazamTriggered = false;
             pikachuThunderboltTriggered = false;
+            redThunderTriggered = false; // Reset FLAG
 
             red = null;
             charizard = null;
@@ -610,9 +612,14 @@
                     red.timer += dt;
                     if (red.state === 'shouting_p') {
                         // 70초 백만볼트: 레드가 대사를 외치고 0.8초 후 전격 발동
-                        if (red.timer > 0.8 && !isThunderboltActive) {
+                        // **FIX: Fire only if not already firing and only if win sequence is not complete**
+                        if (red.timer > 0.8 && !isThunderboltActive && !isGameWon) {
                             isThunderboltActive = true;
-                            thunderboltTimer = 0;
+                            thunderboltTimer = 0; // State timer for Thunderbolt duration
+                            
+                            // **Flag for concluding sequence logic**
+                            redThunderTriggered = true; 
+
                             // 모든 적 즉시 제거 및 스폰 타이머 정지
                             slowpokes = [];
                             magikarps = [];
@@ -621,6 +628,9 @@
                             ghosts = [];
                             thunderStones = [];
                             if (ghostInterval) clearInterval(ghostInterval);
+                            
+                            // **FIX: Stop Red shouting immediately**
+                            red.state = 'leaves_p';
                         }
                     } else if (red.timer > 1.2) {
                         if (red.state === 'shouting' && !charizard) {
@@ -652,7 +662,7 @@
                             };
                         }
                     }
-                } else if (red.state === 'leaving') {
+                } else if (red.state === 'leaving' || red.state === 'leaves_p') { // **Added leaves_p state handling**
                     red.x += 350 * dt;
                     if (red.x > CANVAS_WIDTH + 140) red = null;
                 }
@@ -686,12 +696,24 @@
                     });
                 }
 
-                // 2초 지속 완료 후 전격 종료 및 생존완료 화면 표시
+                // **2초 지속 완료 후 전격 종료**
                 if (thunderboltTimer >= 2.0) {
                     isThunderboltActive = false;
                     lightningBolts = [];
+                    // **DO NOT set isGameWon yet.** Red state transition is handled above.
+                }
+            }
+
+            // **0.5초 대기 후 생존완료 화면 표시 handled sequence Handling**
+            if (redThunderTriggered && !isThunderboltActive && !isGameWon) {
+                // If Thunderbolt ended, thunderboltTimer is locked at >= 2.0.
+                // dt is increasing every frame.
+                // User wants Win Screen at 2.5s cumulative (Trigger + 2s T-event + 0.5s pause).
+                
+                // We reuse thunderboltTimer as a state timer even after electric is off.
+                thunderboltTimer += dt; 
+                if (thunderboltTimer >= 2.5) {
                     isGameWon = true;
-                    if (red) red.state = 'leaving';
                 }
             }
 
